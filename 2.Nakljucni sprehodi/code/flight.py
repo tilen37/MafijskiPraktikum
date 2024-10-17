@@ -43,8 +43,19 @@ def sim_flight(mi):
     line = curve_fit(lambda x, a, b: a * x + b, lnN, lnmads2)
     gamma = line[0][0]
 
+    plt.scatter(lnN, lnmads2, s=1, label='simulacija')
+    plt.plot(lnN, line[0][0] * lnN + line[0][1], '--', c='gray', label='Fit')
+    plt.xlabel(r'$\ln(N)$')
+    plt.ylabel(r'$2\ln(\mathrm{MAD}^2)$')
+    plt.title(
+        r'Odvisnost $\ln(\mathrm{MAD}^2)$ od $\ln(N)$ pri $\mu = $' + str(mi))
+    plt.legend()
+    plt.show()
+
     return gamma
 
+
+sim_flight(1.5)
 
 start_time = time.time()
 mis = np.arange(1.2, 4, 0.2)
