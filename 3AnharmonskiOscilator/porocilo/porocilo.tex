@@ -1,0 +1,107 @@
+\documentclass{porocilo}
+\institutionlogo{~/Pictures/UlFmf_logo.pdf}
+\subjectname{Matematično-fizikalni praktikum}
+\projecttitle{3. Anharmonski Oscilator}
+\authorname{Tilen Šket, 28221057}
+\instructions{Z diagonalizacijo poišči nekaj najnižjih lastnih
+    vrednosti in lastnih valovnih funkcij za moteno Hamiltonko
+    $H = \frac{1}{2} \left( p^2 + q^2 \right) + \lambda q^4$
+    ob vrednostih parametra $0\le\lambda\le 1$.  Rešujemo torej
+    matrični problem lastnih vrednosti
+    \begin{equation*}
+        H | n \rangle = E_n | n \rangle \>.
+    \end{equation*}
+}
+\begin{document}
+\maketitle
+
+\section{Uvod}
+\subsection{Fizikalni uvod}
+Pri tej nalogi se bomo lotili reševanja problem anharmonskega oscilatorja. To je kvantno mehanski sistem s potencialom oblike
+\begin{equation*}
+    V = \frac{1}{2} q^2 + \lambda q^4.
+\end{equation*}
+Zaradi enostavnejšega zapisa bomo energije merili v enotah $\hbar \omega$, gibalne količine v enotah $(\hbar m \omega)^{1/2}$ in dolžine v enotah $(\hbar/m\omega)^{1/2}$. Hamiltonian zapišemo kot
+\begin{equation*}
+    H = H_0 + \lambda q^4,
+\end{equation*}
+kjer je
+\begin{equation*}
+    H_0 = \frac{1}{2} p^2 + \frac{1}{2} q^2.
+\end{equation*}
+Matrične elemente $H_0$, lahko zapišemo
+\begin{equation*}
+    \langle i|H_0|j \rangle = {1\over 2} \sqrt{i+j+1}\,\, \delta_{|i-j|,1} \>.
+\end{equation*}
+Matrične elemente perturbacijske matrike pa lahko izračunamo po treh metodah. Ali izračunamo matrične elemente posplošene koordinate in nato dvakrat kvadriramo dobljeno matriko
+\begin{equation*}
+    \langle i | q | j \rangle = {1\over 2} \sqrt{i+j+1}\,\, \delta_{|i-j|,1} \>,
+\end{equation*}
+ali izračunamo kar kvadrate le teh in matriko le enkrat kvadriramo
+\begin{equation*}
+    \langle i|q^2|j\rangle = {1\over 2} \biggl[
+    {\sqrt{j(j-1)}} \, \delta_{i,j-2}
+    + {(2j+1)} \, \delta_{i,j}
+    + {\sqrt{(j+1)(j+2)}} \, \delta_{i,j+2} \biggr],
+\end{equation*}
+ali pa direktno četrto potenco po formuli
+\begin{eqnarray*}
+    \langle i|q^4|j\rangle
+    = {1\over 2^4}\sqrt{2^i \, i!\over 2^{j} \, j! } \, \biggl[ \,
+        &\,& \delta_{i,j+4} + 4\left(2j+3\right) \delta_{i,j+2}
+        + 12 \left(2j^2+2j+1\right) \, \delta_{i,j} \\[3pt]
+    &+& 16j \left(2j^2-3j+1\right) \, \delta_{i,j-2}
+    + 16j\left(j^3-6j^2+11j-6\right) \, \delta_{i,j-4} \biggr] \>.
+\end{eqnarray*}
+
+Dobljene matrike nato diagonaliziramo in poiščemo njihove lastne vrednosti, ki nam povejo energijske nivoje, in lastne valovne funkcije, ki so zapisane v bazi lastnih valovnih funkcij harmonskega oscilatorja.
+
+\subsection{Diagonalizacija}
+
+\newpage
+\section{Anharmonski oscilator}
+\subsection{Način izračuna perturbacijske matrike}
+Našemu hamiltonianu, sem na tri različne načine, opisane v uvodu, dodal perturbacijski del. V tem delu naloge, sem se vprašal katerega izmed teh bom uporabil pri kasnejših izračunih. Opazil sem, da se dobljene matrike ne skladajo popolnoma ampak, da dobimo pri kvadriranju robne napake.
+
+\insertfig[0.9]{Matrike.png}{Grafično prikazane vrednosti perturbacijske matrike izračunane na tri različne metode. Iz slik se vidijo tudi robne napake.}{matrike}
+
+Razlika med metodami je bila tudi v največji velikosti matrik, ki sem jih lahko še izračunal. Pri metodi, kjer sem direktno izračunal vrednost $H^4$, sem opazil zgornjo mejo pri okoli dimenziji 170, kar je povzročilo, da sem se odločil od tukaj dalje uporabljati metodo, kjer matriko kvadriram enkrat, torej računam $\langle i|q^2|j\rangle$.
+
+\subsection{Diagonalizacija}
+Pri tem delu naloge, sem dobljene matrike z različnimi implementacijami algoritmov diagonaliziral in poiskal lastne vrednosti ter vektorje. Različne implementacije sem primerjal po hitrosti diagonalizacije 1000 dimenzionalne matrike. Rezultati so zapisani v tabeli~\ref{tab:times}.
+
+\begin{table}
+    \centering
+    \caption{\label{tab:times} Tabela različnih implementacij diagonalizacije matrike dimenzije 1000.}
+    \begin{tabular}{c c}
+        Implementacija & Čas [s]    \\
+        numpy          & \num{0.31} \\
+        scipy          & \num{0.25} \\
+        Hausholder     & \num{89}   \\
+        QR             & \num{68}   \\
+    \end{tabular}
+\end{table}
+
+Od tukaj dalje sem uporabljal implementacijo iz knjižnjice numpy, saj sem je najbolj navajen in je bila primerljivo hitra kot tista iz knjižnjice scipy.
+
+\subsection{Lastne vrednosti}
+Matriko, ki sem jo ustvaril, sem sedaj diagonaliziral in poiskal njene lastne vrednosti s pomočjo implementacije tega v knjižnjici numpy. Zanimalo me je prvih nekaj lastnih vrednosti in njihova odvisnost od parametra $\lambda$. Podatke sem nato prikazal na~\ref{fig:eigen}
+
+\insertfig{LastneVrednosti.png}{Odvisnost energije nivoja od zaporednega števila. Opazimo tudi, da pri $\lambda = 0$ rezultat sovpada z neperturbiranim.}{eigen}
+
+Izračunal sem tudi odvisnost nekaterih prvih lastnih vrednosti od velikosti matrike uporabljene za izračun le teh. Dobra opomba je, da moramo za n-to lastno vrednost imeti matriko dimenzije vsaj n. Podatki so prikazani na sliki~\ref{fig:dimMat}
+
+\insertfig{dimMatrike.png}{Odvisnost prvih nekaj lastnih vrednosti od števila dimenzij matrike.}{dimMat}
+
+\subsection{Lastne valovne funkcije}
+Poglejmo še, kako te lastne valovne funkcije izgledajo. Prikazane so na sliki~\ref{fig:vf}. Te sem dobil tako, da so linearne kombinacije nekih Hermitovih polinomov, v katerih bazi so bile po diagonalizaciji zapisane.
+
+\insertfig{prikazVF.png}{Slika prvih štirih valovnih funkcij. Vsaka izmed teh je neka linearna kombinacija Hermitovih polinomov.}{vf}
+
+\newpage
+\section{Zaključek}
+To nalogo oddajam v četrtek niti več zelo zgodaj zjutraj. Med že oddanimi mislim, da sem jo naredil najslabše, saj sem si vzel veliko premalo časa, ker sem jo začel delati šele v sredo pozno popoldne. Od takrat do sedaj pa se je ob praznovanju (še enega) rojstnega dneva v času oddaje naloge zgodilo veliko stvari, ki so zahtevale več moje pozornosti, kot sem to sprva načrtoval.
+
+Še nekaj časovne statistike, ob pisanju tega zaključka sem na 6 urah skupnega dela, od česar pripadajo nekje 4 pisanju kode in preostali 2 pisanju tega poročila. To je časovno gledano dobro, vendar je tokrat zaradi časovne optimizacije preveč trpela kvaliteta, zato s tem nisem zadovoljen.
+
+\end{document}
