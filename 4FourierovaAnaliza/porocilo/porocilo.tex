@@ -1,0 +1,100 @@
+\documentclass{porocilo}
+\institutionlogo{~/Pictures/UlFmf_logo.pdf}
+\subjectname{Matematično-fizikalni praktikum}
+\projecttitle{4. Fourierova Analiza}
+\authorname{Tilen Šket, 28221057}
+\instructions{
+    Izračunaj Fourierov obrat Gaussove porazdelitve in nekaj enostavnih vzorcev,
+    npr.\ mešanic izbranih frekvenc. Za slednje primerjaj rezultate, ko
+    je vzorec v intervalu periodičen (izbrane frekvence so mnogokratniki
+    osnovne frekvence), z rezultati, ko vzorec ni periodičen (kako naredimo Gaussovo porazdelitev `periodično' za FT?).
+    Opazuj pojav potujitve na vzorcu, ki vsebuje frekvence nad Nyquistovo
+    frekvenco. Napravi še obratno transformacijo (\ref{eq:inverz}) in preveri
+    natančnost metode. Poglej, kaj se dogaja z časom računanja, kako je odvisen od števila vzorčenj?
+    Po Fourieru analiziraj \SI{2.3}{s} dolge zapise začetka Bachove
+    partite za violino solo, ki jih najdeš na spletni strani
+    Matematičnofizikalnega praktikuma.  Signal iz začetnih taktov
+    partite je bil vzorčen pri \SI{44100}{Hz}, \SI{11025}{Hz}, \SI{5512}{Hz}, \SI{2756}{Hz}, \SI{1378}{Hz} in \SI{882}{Hz}.  S poslušanjem zapisov v formatu {\tt \.mp3}
+    ugotovi, kaj se dogaja, ko se znižuje frekvenca vzorčenja,
+    nato pa s Fourierovo analizo zapisov v formatu {\tt \.txt}
+    to tudi prikaži.
+}
+
+\newcommand{\ii}{\mathrm{i}}
+
+\begin{document}
+\maketitle
+
+\section{Uvod}
+Fourierjeva transformacija je eden izmed najpomembnejših, če ne najpomembnejše, odkritje. Vendar v svoji navadni, zvezni, obliki izven listov polnih teorije nima tolikšnega pomena, saj signalov v praksi ne moremo meriti zvezno, ampak le diskretno. Obstaja pa tudi njegova diskretna enačica, ki se presnetljivo imenuje diskretna Fourierova transformacija (DFT).
+
+Pri tej nalogi smo obravnavali uniformno vzorčenje na interval $\Delta$. Diskretni verziji transformacije in njenega inverza, smo zapisali na naslednji način:
+
+\begin{equation*}
+    h_k = h(t_k),\quad t_k = k \Delta, \quad k=0,1,2,\dots N-1,
+\end{equation*}
+
+\begin{equation}
+    H_n = \sum_{k=0}^{N-1}
+    h_k \exp(2 \pi \ii k n / N),
+    \qquad n=-\tfrac{N}{2},\dots ,\tfrac{N}{2},
+    \label{eq:discrete}
+\end{equation}
+
+\begin{equation}
+    h_k = \frac{1}{N} \sum_{n=0}^{N-1} H_n \exp(-2 \pi \ii k n / N).
+    \label{eq:inverz}
+\end{equation}
+
+Ta algoritem množico točk iz časovne domene prenese v frekvenčno in če naš signal ne vsebuje frekvenc višjih od Nyquistove, to je $f_{\rm Nyquist} = \frac{1}{2\Delta}$, potem s tako transformacijo nismo izgubili nič informacije in lahko po inverzni transformaciji rekonstruiramo originalni signal. Če pa naš signal vsebuje tudi višje frekvence, potem dobimo pojav potujitve (\textit{Aliasing}).
+
+Torej imamo diskretno verzijo transformacije, ki nam iz časovne domene slika v frekvenčno na območje $[-f_{\rm Nyquist}, f_{\rm Nyquist}]$ in inverzno transformacijo, ki nam omogoča rekonstrukcijo originalnih signalov.
+
+\section{Algoritem za DFT}
+Za boljše razumevanje samega delovanja DFT, sem se sam lotil kodiranja algoritma in njegovega inverza po enačbah~\ref{eq:discrete} in~\ref{eq:inverz}. Časovna zahtevnost mojega algoritma je $O(N^2)$, torej ne spada v rang FFT algoritmov, kateri imajo časovno zahtevnost $O(N\ln N)$. Čeprav teoretično poznam obe časovni zahtevnosti, sem se lotil le te tudi preveriti. In sicer sem primerjal svoj DFT algoritem s FFT algoritmoma iz Python knjižnic \textit{Numpy} in \textit{Scipy}. Primerjal sem jih na vsoti naključnih sinusnih signalov. Rezultate sem izrisal na graf na sliki~\ref{fig:timeComplexity}.
+
+\insertfig{figs/timeComplexity.pdf}{Graf časovne zahtevnosti različnih algoritmov DFT.\:Primerjan je moj lasten, naiven, algoritem z algoritmoma iz knjižnic \textit{Scipy} in \textit{Numpy}.}{timeComplexity}
+
+Od tukaj dalje sem uporabljal algoritem iz knjižnjice \textit{Numpy}.
+
+\section{Uporaba DFT}
+\subsection{Potujitev (\textit{Aliasing})}
+Najprej sem vzel sinusni signal z eno frekvenco in se zanimal, kaj se dogaja pri različnih velikostih te frekvence glede na Nyquistovo frekvenco. Vzel sem dva primera in sicer enega s polovično frekvenco Nyquistove in drugega s trikratno. Odločitve sem sprejel na podlagi tega, da se potujitev dobro vidi grafično. Rekunstrukciji in originalna signala so prikazani na slikah~\ref{fig:noAlias} in~\ref{fig:Alias}.
+
+\begin{multifig}{2}{Slika rekonstrukcije dveh sinusoid, kjer ima ena frekvenco manjšo in druga večjo od Nyquistove. Opazimo pojav potujitve, kjer vsebuje rekonstrukcija nižje frekvence, ki jih originalni signal ne.}{0.49}
+    \subfig{figs/re_sin_sub.png}{Frekvenca nižja od Nyquistove.}{noAlias}
+    \subfig{figs/re_sin_over.png}{Frekvenca višja od Nyquistove.}{Alias}
+\end{multifig}
+
+Poglejmo si še primer potujitve za signal, ki je vsota večih sinusoid. Primer je prikazan na slikah~\ref{fig:subAlias} in~\ref{fig:overAlias}. V obeh primerih sem uporabil isti signal in le spremenil frekvenco vzorčenja in opazimo, pojav potujenja, ko je frekvenca premajhna.
+
+\begin{multifig}{2}{Sliki rekonstrukcije signala, ki je vsota sinusoid. Razlika v obeh primerih je le v Nyquistovi frekvenci, kjer je enkrat nižja in enkrat višja od vseh frekvenc v vsoti. Ponovno opazimo pojav potujenja.}{0.49}
+    \subfig{figs/mix_sub.png}{Frekvence nižja od Nyquistove.}{subAlias}
+    \subfig{figs/mix_over.png}{Frekvence višja od Nyquistove.}{overAlias}
+\end{multifig}
+
+\subsection{Gaussova krivulja}
+Nato sem algoritem uporabil na Gaussovi krivulji, kakor je bilo predvideno v navodilih. Po teoriji vemo, da se Gaussova krivulja po Fourierovi transformaciji transformira v Gaussovo krivuljo v drugi domeni. To vidimo tudi na sliki~\ref{fig:gauss}, kjer sta izrisani Gaussova krivulja in njena transformiranka. Gaussovo krivuljo lahko naredimo tudi periodično, kakor vidimo na sliki~\ref{fig:per_gauss}.
+
+\insertfig[0.98]{figs/gauss.png}{Grafa Gaussove krivulje in njene Fourierove transformiranke.}{gauss}
+
+\insertfig[0.98]{figs/periodic_gauss.png}{Grafa periodične Gaussove krivulje in njene Fourierove transformiranke.}{per_gauss}
+
+\subsection{Analiza Bachove partite}
+Na spletni učilnici predmeta, smo dobili 6 posnetkov začetka Bachove partite za violino solo. Signal je v teh posnetkih bil vzorčen pri različnih frekvencah, in sicer pri \SI{44100}{Hz}, \SI{11025}{Hz}, \SI{5512}{Hz}, \SI{2756}{Hz}, \SI{1378}{Hz} in \SI{882}{Hz}. Pri poslušanju zveni vsaka višja stopnja vzorčenja bolj ostra oz.~definirana.
+
+Podatke, ki sem jih dobil, sem izrisal na logaritemski skali, na sliki~\ref{fig:bach} in na linearno skali na sliki~\ref{fig:bach_lin}. Opazimo lahko, kako vsaka višja frekvenca vzorčenja doda večje frekvenčno območje. Vendar pa se vse meje med frekvencami znotraj slušnega območja, kar lahko potrdim s tem, da sem med vsakim parom posnetkov slišal občutno razliko.
+
+\insertfig{figs/Bach.pdf}{Grafi aplitud v odvistnosti od frekvenc izrisani eden na drugem. Hitro vidimo, da z rastjo frekvence vzorčenja, dobimo večje frekvenčno območje.}{bach}
+
+\insertfig{figs/Bach_lin.pdf}{Grafi aplitud v odvistnosti od frekvenc izrisani eden na drugem. Hitro vidimo, da z rastjo frekvence vzorčenja, dobimo večje frekvenčno območje.}{bach_lin}
+
+\newpage
+\section{Zaključek}
+Ob tej nalogi sem zaradi želje po globljem razumevanju Fourierove transformacije in še posebej FFT algoritmov, ki so po besedah Derek-a Muller-ja, lastnika Youtube kanala Veritasium, najpomembnejši algoritmi, kar nekaj časa na začetku sedel ob navodilih s svojo tablico in odprto Wikipedijo in ostalimi viri in si poskusil obrazložiti delovanje algoritma na grafične in drugačne načine. Menim, da sedaj, ko pišem zaključek, te algoritme razumem veliko bolje kot prej, vendar mi manjka še kar nekaj intuicije in predvsem izkušenj.
+
+Rad bi še parafraziral izjavo, ki sem jo prebral v lanskem komentarju k tej nalogi in mi je skozi celotno reševanje ždela v mislih. In sicer je eden izmed študentov zapisal, da smo dobili orodje s katerim lahko začnemo `tolč' po vsaki obliki podatkov, kar mislim, da je za FFT odlična izjava.
+
+Še nekaj časovnih statistik, kot vedno. Za celotno nalogo sem porabil nekje \SI{10}{\hour}, kar je nekoliko več kot za zadnji dve. Se je pa od zadnjih dveh obdržala stalnica, da pišem zaključek že kar krepko v četrtek, že nekaj ciklov zaspanosti kasneje,kot bi si to želel priznati.
+
+\end{document}
