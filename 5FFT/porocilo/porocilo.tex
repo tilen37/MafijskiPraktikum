@@ -1,0 +1,135 @@
+\documentclass{porocilo}
+\input{.local/mafijski_praktikum}
+\projecttitle{5. FFT in avto-korelacija}
+\instructions{Na spletni strani MF praktikuma najdeš posnetke
+oglašanja velike uharice, naše največje sove.  Posneti sta
+dve sovi z minimalnim ozadjem ({\tt bubomono} in {\tt bubo2mono})
+in nekaj mešanih signalov, ki zakrivajo njuno oglašanje
+({\tt mix}, {\tt mix1}, {\tt mix2} in {\tt mix22}).
+V signalih {\tt mix2} in {\tt mix22} je oglašanje sove
+komaj še zaznavno.  Izračunaj avto-korelacijsko funkcijo
+vseh signalov in poskusi ugotoviti, za katero sovo gre
+pri teh najbolj zašumljenih signalih! \\ {\it Dodatna naloga\/}: Izračunaj še avto-korelacijsko funkcijo
+za kak signal, ki ga posnameš sam ali za kak proces, za katerega
+sam poiščeš ustrezne podatke.}
+
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\intc}{\frac{1}{T}\int\limits_0^{T}}
+
+\begin{document}
+
+\maketitle
+
+\section{Uvod}
+Podobno kot pri prejšnji nalogi, tudi tokrat obravnavamo Diskretno Fourierevo transformacijo (DFT), vendar tokrat omenimo še teorijo za tako imenovanim hitro Fourierevo transformacijo (FFT). FFT je v resnici le poljubna implementacija DFT v $O(N \log N)$ časovni zahtevnosti. Algoritem pa je tudi tesno povezan z avto-korelacijo, ki se izkaže, da je podobna množenju v frekvenčnem prostoru, kar nam s pomočjo hitrejšega algoritma za prehod med prostoroma omogoča tudi hitrejši algoritem za izračun same avto-korelacije.
+
+\subsection{FFT algoritem}
+Poglejmo si idejo za algoritmom in kaj ga naredi toliko hitrejšega od naivnih DFT algoritmov, ki imajo časovno zahtevnost $O(N^2)$. Enačbo za DFT zapišemo
+\begin{equation*}
+    H_k = \sum_{n=0}^{N-1} W_N^{nk} h_n \>,
+\end{equation*}
+kjer je $W_N = \exp(2 \pi \ii / N)$. Glavni premislek za FFT različico tega algoritma je razcep na sode in lihe člene tako
+\begin{equation*}
+    H_k = H_{k}^\mathrm{sod} + W_N^k H_{k}^\mathrm{lih} \>.
+\end{equation*}
+Ob rekurzivnem ponavljanju tega koraka nam na koncu ostanejo deli zaporedja dolžine 1, za katere je transformacija kar identiteta. Vseh potrebnih delitev, da pridemo do takega roba je $\log_{2} N$, na vsakem koraku pa je potrebno še eno množenje s potenco uteži $W$, kar nam da skupno iskano časovno zahtevnost $O(N \log N)$. Preostane nam le še izziv beleženja kateri člen ima katero parnost v posameznem koraku, kar pa lahko naredimo z branjem binarnega zapisa indeksa tega člena od zadaj naprej. Tudi potence uteži računamo z rekurzijo in tako dobimo algoritem ranga FFT.%
+
+\subsection{avto-korelacija}
+Še eden koncept, ki ga potrebujemo pri tej nalogi je avto-korelacija. Sama definicija korelacije je
+\begin{equation*}
+    \phi_{gh}(\tau)=\intc g(t+\tau)\,h(t)\dd t \>,
+\end{equation*}
+kjer če za $g$ in $h$ vzamemo isti signal, dobimo avto-korelacijo. Očitno je, da je vrednost avto-korelacije v izhodišču največja, zato jo lahko normiramo na to vrednost.  Vsaka nadaljnji zamik $\tau$, pri katerem je vrednost avto-korelacije visoka, pa predstavlja neko (vsaj približno) periodičnost v našem signalu.
+
+Sama definicija korelacije nas lahko hitro spomni na convolucijo, za katero pa vemo, da predstavlja v frekvenčnem prostoru produkt. S tem se naša enačba za korelacijo prevede v
+\begin{equation*}
+    \phi_{gh}(\tau) = \mathcal{F}^{-1} (F(-f) G(f))  \>.
+\end{equation*}
+Enačba za avto-korelacijo pri realnih signalih, za katere velja $H^*(f) = H(-f)$, pa kar na
+\begin{equation*}
+    \phi_{hh}(\tau) = \mathcal{F}^{-1} (|H|^2)  \>.
+\end{equation*}
+
+\subsection{Odpravljanje šuma z avto-korelacijo}
+S pomočjo avto-korelacije lahko iz našega signala izločimo šum. To lastnost sem posebej izpostavil, saj je temelj celotne naloge. Recimo, da imamo nek signal $h$, ki vsebuje šum $n$ in uporaben del signala $s$. Poglejmo avto-korelacijo le tega
+\begin{align*}
+    \phi_{hh}(\tau) & = \intc h(t+\tau)\,h(t)\dd t                             \\
+                    & = \intc (s(t+\tau) + n(t+\tau))\,(s(t) + n(t))\dd t      \\
+                    & = \phi_{ss}(\tau) + 2 \phi_{sn}(\tau) + \phi_{nn}(\tau).
+\end{align*}
+Na tej točki, smo torej izpeljali našo iskano avto-korelacijo, kot vsoto treh ostalih, torej se vprašajmo kaj vemo o avto-korelaciji šuma. Nekako po definiciji šuma hitro vidimo, da mora biti $\phi_{sn}(\tau)$ in $\phi_{nn}(\tau)$ približno 0, saj šum ni koreliran z ničemer dobro. V primeru belega šuma je korelacija $n$ z $s$ res 0, avto-korelacija $n$ pa neke vrste delta funkcija.
+
+\section{Naloga}
+\subsection{Določanje sov v zašumljenih posnetkih}
+Za nalogo smo tokrat dobili 2 zvočna posnetka oglašanje dveh sov, ki sem ju na izziv profesorja poimenoval \textit{Newton} in \textit{Leibnitz}. Poleg tega pa še 4 zašumljene posnetke, katerih namen je, da določimo, kateri izmed sov pripadajo.
+
+Z analizo sem začel tako, da sem pogledal signala obeh sov in ju izrisal na sliki~\ref{fig:ownSounds_t}. Nato sem ju primerjal z njima avto-koreliranima analogoma, ki sta izrisana na sliki~\ref{fig:ownSounds_auto_t}. Takoj opazimo, da je veliko manj visokih frekvenc, katere prihajajo iz belega šuma ozadja. Tako smo dobili bolj ostra signala zvokov obeh sov.
+
+\begin{multifig}{2}{Izrisani amplitudi signalov obeh sov.}{0.49}{ownSounds_t}
+    \subfig{Newton_t.pdf}{}{Newton_t}
+    \subfig{Leibnitz_t.pdf}{}{Leibnitz_t}
+\end{multifig}
+
+\begin{multifig}{2}{Izrisani amplitudi signalov obeh sov po avto-korelaciji.}{0.49}{ownSounds_auto_t}
+    \subfig{Newton_auto_t.pdf}{}{Newton_auto_t}
+    \subfig{Leibnitz_auto_t.pdf}{}{Leibnitz_auto_t}
+\end{multifig}
+
+Zanimalo me je tudi, kaj se je skozi ta proces dogajalo v frekvenčnem območju, zato sem najprej pogledal FFT posameznih signalov, ki sta prikazana na~\ref{fig:ownSounds_f}, nato pa še FFT signalov po avto-korelaciji, na sliki~\ref{fig:ownSounds_auto_f}. Znova opazimo zelo veliko razliko iz stališča zašumljenosti signalov.
+
+\begin{multifig}{2}{Izrisana signala obeh sov v frekvenčnem prostoru.}{0.49}{ownSounds_f}
+    \subfig{Newton_f.pdf}{}{Newton_f}
+    \subfig{Leibnitz_f.pdf}{}{Leibnitz_f}
+\end{multifig}
+
+\begin{multifig}{2}{Izrisana signala obeh sov v frekvenčnem prostoru, po avto-korelaciji.}{0.49}{ownSounds_auto_f}
+    \subfig{Newton_auto_f.pdf}{}{Newton_auto_f}
+    \subfig{Leibnitz_auto_f.pdf}{}{Leibnitz_auto_f}
+\end{multifig}
+
+V naslednjem koraku sem se lotil primerjave signalov sov z neznanimi. To sem storil tako, da sem vse signale dal v frekvenčni prostor po opravljeni avto-korelacije na vsakem posamezno. Ker me je zanimalo, ali lahko najdem \textit{Newton-ov} in \textit{Leibnitz-ov} glas v zašumljenih signalih, sem matrično izrisal vse pare grafov, na sliki~\ref{fig:soviKonec}. Opazimo, da je precej enostavno najti ustrezne pare ujemanja, predvsem zaradi kar velike razlike v frekvenci glavnih harmonikov obeh sov. Iz te slike, lahko z precej veliko gotovostjo rečem, da pripadajo {\tt mix}, {\tt mix1} in {\tt mix2} \textit{Newtonu} in {\tt mix22} \textit{Leibnitzu}.
+
+\insertfig[0.9]{soviKonec.pdf}{Grafi frekvenčnega prostora zvokov sov in zašumljenih posnetkov. Ker imata \textit{Newton} in \textit{Leibnitz} različna glavna harmonika, sem že le z očesno primerjavo določil, kateri izmed zašumljenih posnetkov pripada komu, s tem da sem pogledal ujemanje posameznega z zašumljenem posnetkom v tem glavnem harmoniku. Tako določim, da pripadajo {\tt mix}, {\tt mix1} in {\tt mix2} \textit{Newtonu} in {\tt mix22} \textit{Leibnitzu}.}{soviKonec}
+
+\subsection{Visokofrekvenčni šum}
+Ob risanju~\ref{fig:soviKonec}, sem opazil, da imata {\tt mix2} in {\tt mix22} oba močen vrh pri frekvenci nekoliko višji od \SI{600}{\hertz}. Vprašal sem se zakaj in ta dva grafa posebej izrisal na sliki~\ref{fig:reka_auto_f}. Menim, da sem odgovor našel v bolj natančnem branju zapisa ob posnetkih na spletni učilnici, in sicer piše, da sta oba posnetka posneta ob deroči reki. Zanimivo vprašanje, ki se ob tem porodi, pa je zakaj ima posnetek te reke močen signal pri tej frekvenci. Možno bi bilo, da je ta signal nastal zaradi šuma naprave, vendar tega zaradi ne poznavanja uporabljenega mikrofona nisem mogel preverit.
+
+\begin{multifig}{2}{Grafa avto-koreliranih signalov {\tt mix2} in {\tt mix22} v frekvenčnem prostoru. Ta grafa sta zanimiva, saj opazimo močna vrha pri frekvenci nad \SI{600}{\hertz}.}{0.49}{reka_auto_f}
+    \subfig{reka1_auto_f.pdf}{}{reka1_auto_f}
+    \subfig{reka2_auto_f.pdf}{}{reka2_auto_f}
+\end{multifig}
+
+\section{Zvok študentskih bonov}
+Če je bralec tega poročila sam študent ali pa vsaj z njimi dovoljkrat v stiku v času kosila, nedvomno pozna zvok, ki ga predvaja telefon, ob potrditvi študentskega bona. Moj opis za vse ostale bi bil, da zveni podobno kot beli šum, vendar še vedno lahko prepoznaš, da so nekatere frekvence močneje zastopane. Že ob sami predstavitvi naloge, je bila moja prva misel, da bi lahko z avto-korelacijo obdelal ta zvok in s tem videl, katere so te frekvence, ki zvenijo kot cviljenje v morju belega šuma.
+
+Ker mi telefon sam po sebi ne dopušča, da bi posnel zvok preko programske opreme neposredno, ali pa samo nisem našel načina za to, sem ga posnel z mikrofonom na računalniku. To pa poudarjam zato, ker sem s tem svojem signalu nedvomno dodal še več šuma zaradi slabe kvalitete mikrofona. Signal, ki sem ga tako dobil, sem nato najprej izrisal v obliki spektrograma, prikazanega na sliki~\ref{fig:spectrogram}. Opazimo, da se glavni harmonik nahaja nekje na \SI{1700}{\hertz}. Poglejmo sedaj ta zvok po in pred avto-korelacijo, kar sem prikazal na sliki~\ref{fig:boni}. Tukaj lahko opazimo res veliko razliko v količini šuma v signalu pred in po. Torej sem imel z oceno tega, da je v zvoku velikega šuma prav. Sedaj pa poglejmo to še v frekvenčnem prostoru, da vidimo katere frekvence so močno zastopane. To je izrisano na grafu na sliki~\ref{fig:boni_auto_f}.
+Opazimo značilno obliko glavnega in višjih harmonikov, in sicer sta glavna par \SI{1650}{\hertz} in \SI{1834}{\hertz}, višji pa njunih večkratnikih. Signal, ki sem ga iz tega dobil, sem potem ponovno vrnil v obliko spektrograma, na katerem se močno vidi le glavni harmonik, in sem le tega zato izrisal na sliki~\ref{fig:spectrogram_auto_f}. Opazimo lahko zanimivo periodično obliko. V le tej je nekako zakodirana koda za potrditev bona.
+
+\insertfig{spektrogram.pdf}{Spektrogram zvoka potrditve študentskega bona. Opazimo, da se nekatere frekvence res precej močneje zastopane kot druge.}{spectrogram}
+
+\begin{multifig}{2}{Valovna oblika zvoka potrditve študentskih bonov po in pred avto-korelacijo. Opazimo lahko res močno razliko v količini šuma.}{0.49}{studentski_boni}
+    \subfig{valovna_oblika.pdf}{Valovna oblika pred avto-korelacijo.}{boni}
+    \subfig{avtokorelacija.pdf}{Valovna oblika po avto-korelaciji.}{boni_auto}
+\end{multifig}
+
+\insertfig[0.7]{fft_avtokorelacija.pdf}{FFT avto-koreliranega signala potrditve študentskih bonov. Opazimo glavna harmonika na \SI{1650}{\hertz} in \SI{1834}{\hertz} in višje harmonike na njunih večkratnikih Pri obeh imamo tudi neko razmazanost.}{boni_auto_f}
+
+\insertfig{spektrogram_auto_f.pdf}{Kos spektrograma, ki vsebuje oba glavna harmonika za zvok potrditve študentskih bonov, po odstranitvi šuma z avto-korelacijo.}{spectrogram_auto_f}
+
+\section{Zaključek}
+Tale zaključek začuda pišem že v soboto zvečer. Ta naloga mi je do sedaj bila najbolj všeč, saj mi je dovolila, da sem bil najbolj kreativen in samoiniciativen in sem se zato tudi lotil dodatne naloge. Že v prejšnjem poročilu sem pisal o tem, da je Fouriereva transformacija orodje, s katerim lahko sedaj `tolčemo' po vsem. To se je ta teden dodobra izkazalo, saj smo s sošolci prišli na tisoč in eno idejo, kaj vse lahko analiziramo z novo pridobljenimi orodji. Prišel sem tudi na idejo, da bi si izmenjali posnetke glasbe, ki bi ji dodali šum, in si tako med seboj postavili izzive odstraniti ta šum do te mere, da bi bila glasba spet prepoznavna. Ob pisanju tega zaključka se tega še nismo lotili.
+
+Ta teden sem porabil tudi kar nekaj časa na tem, da sem si končno uredil svoj nabor barv, ki bodo, če ne bo večjih sprememb, nastopale v preostalih poročilih. Prav tako sem si zmanjšal količino potrebne kode s tem, da sem si prednastavil vse željene nastavitve za risanje grafov brez, da bi jih potreboval vsakič ponovno kopirati na začetek svoje Python skripte.
+
+In pa še moja standardna časovna statistika, do sedaj sem za to nalogo porabil \SI{7.5}{\hour} in še dodatni 2, saj sem ta teden bil na predstavitvi naloge, kar pa se je izkazalo za dobro odločitev, saj mi je dalo dodatni zagon, da sem nalogo končal tako zgodaj.
+
+\section{Dodatek}
+Tale del pišem v ponedeljek in ga dodajam, po tem, ko sem v nedeljo zvečer v kuhinji razlagal nalogo sodomovkam, medtem ko so mi kuhale večerjo, in smo posneli še nekaj zvokov, ki sem jih analiziral in jih sedaj dodajam. Najprej smo analizirali ton C4, kjer sem opazil zanimivo strukturo pri nizkih frekvencah, ker telefon tako nizkih frekvenc ne more niti predvajati, niti dobro posneti. To je prikazano na sliki~\ref{fig:fft_c4}. Nato sem posnel zvok potrditve študentskih bonov še zvok potrditve študentskih bonov od drugih, prikazano na sliki~\ref{fig:boni2}. Nazadnje pa še zvok petja sodomovca. Katero pesem je prepeval, pa lahko uganete iz spektrograma na sliki~\ref{fig:davidPoje}.
+
+\insertfig{fft_avtokorelacija_C4.pdf}{Graf avtokoreliranega signala tona C4, ki ima glavni harmonik na \SI{262}{\hertz} predvajanega in posnetega s telefonom. Opazimo močen šum pri nizkih frekvencah, kar je najbrž posledica tega, da telefoni niso dobri s tako nizkimi frekvencami.}{fft_c4}
+
+\insertfig{fft_avtokorelacija_boni2.pdf}{Graf zvoka potrditve študentskih bonov od sodomovke. Opazim, da posnetek od nje ne vsebuje enakih višjih harmonikov, kot sem pričakoval po fizikalni indukciji na mojih.}{boni2}
+
+\insertfig{davidPoje.pdf}{Spektrogram petja sodomovca.}{davidPoje}
+
+\end{document}
