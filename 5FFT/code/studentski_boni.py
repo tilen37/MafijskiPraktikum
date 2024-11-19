@@ -26,14 +26,15 @@ nyquist = sr/2
 # draw a spectrogram
 D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max) + 80
 # Color: sequential, continuous, light for low values, dark for high values
-librosa.display.specshow(D, sr=sr, y_axis='log', cmap=custom_color_gradient)
-plt.grid(False)
+librosa.display.specshow(D, sr=sr, y_axis='log', cmap=custom_color_gradient, x_axis='time')
+plt.grid(True, alpha=1, color='black', linestyle='--')
 plt.colorbar(format='%+2.0f dB')
 plt.xlabel(r'Čas $t$ [s]', labelpad=15)
 plt.ylabel('Frekvenca [Hz]')
 plt.title('Spektrogram sodomovčevega petja')
 plt.tight_layout()
-# plt.savefig('5FFT/porocilo/davidPoje.pdf')
+plt.ylim(200, 2000)
+# plt.savefig('5FFT/porocilo/resitev.pdf')
 plt.show()
 
 # draw a waveform
