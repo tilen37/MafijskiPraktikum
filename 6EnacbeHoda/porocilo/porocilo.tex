@@ -1,0 +1,109 @@
+\documentclass{porocilo}
+\input{.local/mafijski_praktikum}
+\projecttitle{Enačbe Hode}
+\instructions{Preizkusi preprosto Eulerjevo metodo ter nato še čim več
+    naprednejših metod (Midpoint, Runge-Kutto 4.~reda, Adams-Bashfort-Moultonov prediktor-korektor \ldots) na primeru z začetnima temperaturama $y(0)=21$ ali $y(0)=-15$, zunanjo temperaturo $y_\mathrm{zun}=-5$ in parametrom $k=0.1$. Kako velik (ali majhen) korak $h$ je potreben? Izberi metodo (in korak) za izračun družine rešitev pri različnih vrednostih parametra $k$.}
+
+\newcommand{\ddd}{\mathrm{d}}
+\newcommand{\Dd}[3][{}]{\frac{\ddd^{#1} #2}{\ddd#3^{#1}}}
+
+\begin{document}
+\maketitle
+
+\section{Uvod}
+Velikokrat lahko slišimo, da so diferencialne enačbe jezik narave, saj vsak fizikalen opis le te, vsebuje diferencialne enačbe v neki obliki. Lahko pogledamo vsem najbrž znan primer 2. Newton-ov zakon, ki je pogosto zapisan v znani obliki $F = ma$ je primer diferencialne enačbe. Čeprav pri tem zakonu sprva ni videti kje se skrivajo odvodi, se študent fizike hitro poduči, da je pospešel $a$ v resnici drugi odvod naše pozicije, velikokrat označene $x$, torej $a = \Dd[2]{x}{t}$.
+
+Diferencialne enačbe v naravi prihajajo v veliko različnih okusih. Največkrat so odvodi časovni, vendar še zdaleč ne vedno. Obstajajo tudi parcialne diferencialne enačbe (\textit{PDE}), kjer nastopajo odvodi po različnih spremenljivka. Najenostavnejše oblike diferencialnih enačb pa so tako imenovane navadne diferencialne enačbe, znane tudi pod kratico \textit{ODE}, ki izhaja iz angleškega izraza \textit{Ordinary Differential Equation}. Pri tej nalogi, se bomo ukvarjali z enačbami tipa ODE.%
+
+Diferencialne enačbe v praksi rešujemo na različne načine. Najbolje je, če je enačbo možno rešiti analitično, saj potem poznamo rešitev do poljubne natančnosti. Vendar je to velikokrat neizvedljivo in moramo namesto tega uporabiti numerične metode.
+
+Problemu kjer poznamo začetne pogoje in ODE sistema, rečemo Eulerjev problem ali v angleščini \textit{Initial Value Problem}, s kratico \textit{IVP}. Slovensko ime je tak tip problema dobil po enemu izmed prvih, ki se je ukvarjal z numeričnim reševanjem takšnih problemov, po \textit{Leonhardu Eulerju}. V svojem delu je izdelal tudi metodo za reševanje takšnih problemov, ki se po njemu imenuje \textit{Eulerjeva metoda} in jo pogosto vzamemo za osnovo. Skozi stoletja so se poleg te razvile tudi novejše, bolj napredne metode, kot so \textit{Heunova}, \textit{Midpoint}, \textit{Runge-Kutta}, \textit{Adams-Bashfort-Moulton} \dots
+
+\subsection{Eulerjeva metoda}
+Pri vseh teh metodah naslednjo vrednost funkcije izračunamo iterativno iz prejšnje in njenega odvoda, ki ga dobimo s klicem podanega ODE-ja, ki ga bom od tukaj dalje označeval z $f$. Izberemo si korak $h$, ki je razdalja med zaporednima točkama, kjer računamo vrednost iskane funkcije. Predpis izračuna naslednje vrednosti po Eulerjevi metodi je
+\begin{equation}
+    y(x+h) = y(x) + h\,f(x, y(x)) \>.
+    \label{eq:Euler}
+\end{equation}
+
+\subsection{Midpoint}
+Kot kritika Eulerjevi metodi, opazimo predpostavko, da se vrednost odvoda med posameznima točkama ne spreminja. To vemo, da ni nujno res, zato predpisu dodamo nov člen, kjer odvod med obema točkama povprečimo in tako dobimo nov približek iskani naslednji točki. Omenjen postopek, je Heunova metoda. Njej ekvivalentna pa je \textit{Midpoint} metoda. Le ta pa vzame predpis iz Eulerjeve metode in naredi le polovico koraka, kjer ponovno izračuna vrednost odvoda in se nato s to vrednostjo odvoda premakne za celoten korak k naslednji točki. Predpis izgleda tako
+\begin{equation}
+    y(x+h) = y(x) + h\,f(x+\tfrac{h}{2}, y(x+\tfrac{h}{2})) \>,
+    \label{eq:Midpoint}
+\end{equation}
+z vmesnim računom
+\begin{equation*}
+    y(x+\tfrac{h}{2}) = y(x) + \tfrac{h}{2}\,f(x, y(x)) \>.
+\end{equation*}
+
+\subsection{Runge-Kutta}
+To je v resnici družina numeričnih metod, ki so dandanes ene izmed najbolj uporabljenih, čeprav so stare že več kot 100 let. Za primer opišimo klasično RK-4 metodo. Ponovno uporabljamo podobno idejo, kot pri \textit{Midpoint}, in sicer to, da računamo vrednosti odvoda in same funkcije v nekih vmesnih točkah. Vendar tokrat za razliko od prej ne uporabimo le zadnjega približka, vendar upoštevamo vse z nekimi numeričnimi predfaktorji. Predpis za RK-4, vsebuje izračun 4 vmesnih vrednosti, ki jih označimo $k_i$, kjer je $i$ indeks vrednosti. Predpis tokrat zgleda tako
+\begin{align}
+    k_1      & =
+    f\left(x,\,{y}(x)\right) \> {,}\nonumber                      \\
+    k_2      & =
+    f\left(x+{\tfrac{1}{2}}h,\,
+    {y}(x)+{\tfrac{h}{2}}k_1\right) \> {,}\nonumber               \\
+    k_3      & =
+    f\left(x+{\tfrac{1}{2}}h,\,
+    {y}(x)+{\tfrac{h}{2}}k_2\right) \> {,}                        \\
+    k_4      & =  f\left(x+h,\,{y}(x)+hk_3\right) \> {,}\nonumber \\
+    {y}(x+h) & =  {y}(x)
+    + {\tfrac{h}{6}}\,\left(k_1 + 2k_2 + 2k_3 + k_4\right) \>.
+    \label{eq:rk4}
+\end{align}
+Numerične faktorje pri izračunum poljubne RK metode, lahko zapišemo tudi v tabelo, ki se imenuje \textit{Butcher tableau}. Poleg tega obstaja tudi razširitev metode v \textit{Runge-Kutta-Fehlberg}, ki doda še dinamično spreminjanje koraka $h$, na podlagi ocene napake, ki smo jo naredili proti napaki, ki jo toleriramo.
+
+\subsection{Adams-Bashfort-Moulton}
+Še zadnja metoda, ki si jo bomo ogledali, pa deluje na nekoliko drugačnem principu, in sicer je prediktor-korektor metoda. Najprej s prediktorjem napovemo, kje je najvrjetneje, da se nahaja naslednja točka, nato s korektorjem izbrano pozicijo popravimo, je osnovna ideja te metode. Pri tej metodi moramo najprej z neko drugo izračunati prve štiri točke, s katerimi potem prilegamo polinom 4.~stopnje na te točke in njihove odvode in tako dobimo vrednost v naslednji točki. To se skriva v predpisu Adams-Bashfort-ovega prediktorja
+\begin{equation*}
+    y^p(x+h) = y(x) + \tfrac{1}{24}h\left(55\,f(x)-59\,f(x-h)+37\,f(x-2h)-9\,f(x-3h)\right) \>.
+\end{equation*}
+Tukaj je $f(x)$ mišljeno kot $f(x, y(x))$.
+Nato na podlagi te ocene izračunamo boljšo oceno za naslednjo točko, s pomočjo Adams-Moulton-ovega korektorja
+\begin{equation*}
+    y^c(x+h) =y(x) +\tfrac{1}{24}h\left(9\,f^p(x+h)+19\,f(x)-5\,f(x-h)+f(x-2h)\right) \>.
+\end{equation*}
+Pri tej metodi torej funkcijo $f$ kličemo le dvakrat za vsako novo točko, kar ima v primerih kjer je to zelo `drago' velik pomen.
+
+\subsection{Opis naloge}
+Pri tej nalogi, se bomo ukvarjali z numeričnim reševanjem Eulerjevega problema
+\begin{equation}
+    \Dd{T}{t} = - k \left( T-T_\mathrm{zun} \right) \>,
+    \label{cooling}
+\end{equation}
+kjer je začetni pogoj $T(t=0) = T_{\rm 1} = 21$ ali $T(t=0) = T_{\rm 2} = -15$. Poznamo tudi njeno analitično rešitev
+\begin{equation*}
+    T(t) = T_\mathrm{zun} + \mathrm{e}^{-kt} \left( T(0) - T_\mathrm{zun} \right) \>,
+\end{equation*}
+Parametri v enačbi znašajo $T_{\rm zun} = -5$, $k = \num{0.1}$.
+
+\section{Naloga}
+Pri primerjavi različnih metod reševanja, bom analitično rešitev vzel kot pravilno in na podlagi le te določil napako ostalih metod. Zato si najprej oglejmo, kakšna je analitična rešitev. Za oba začetna pogoja sem rešitvi izrisal na sliki~\ref{fig:analiticno}.
+
+\begin{multifig}{2}{Analitični rešitvi enačbe pri dveh različnih začetnih pogojih.}{0.49}{analiticno}
+    \subfig{analiticno-15.pdf}{Analitična rešitev za $T_0 = -15$}{analiticno-15}
+    \subfig{analiticno21.pdf}{Analitična rešitev za $T_0 = 21$}{analiticno21}
+\end{multifig}
+
+Enačbo sem nato rešil z skupaj 5 različnimi numeričnimi metodami, in sicer z Eulerjevo, \textit{Midpoint}, RK-4, Adams-Bashfort-Moulton in metodo, ki je vgrajena v \textit{Scipy} knjižnico v Pythonu. Primerjal sem napake, ki se naberejo skozi čas pri teh metodah, pri koraku $h = 0,1$. To je prikazano na sliki~\ref{fig:napake}.
+
+\insertfig{napake.pdf}{Absolutne napake različnih numeričnih metod. Presenetljiva opazka iz tega grafa je, da je \textit{Scipy} metoda toliko slabša od nekaterih drugih, ki sem jih zakodiral sam. Napake so bile izračunane pri začetnem pogoju $T_{\rm 1}$, vendar pri drugem ni očitnih razlik.}{napake}
+
+Nato sem pogledal, kako se napako posameznih numeričnih metod spreminjajo z velikostjo koraka. In sicer, sem našel, da je korak okoli $h = 0,1$ nekakšna mejna vrednost, zato sem pogledal, kako se spreminjajo napake, še korak za le malo povečam od te vrednosti. Rezultati so izrisani na sliki~\ref{fig:korakinapak}.
+
+\insertfig{korakinapak.pdf}{Graf napak, pri različnih vrednostih koraka v okolici $h = 0,1$. }{korakinapak}
+
+Vprašal sem se tudi, kako vpliva red velikosti koraka na napako posameznih metodo. Graf teh odvisnosti sem izrisal na sliki~\ref{fig:velikikorakinapak}. Iz te slike pa vidimo tudi, da metoda \textit{Scipy} ni odvisna od velikosti koraka, iz česar lahko sklepamo, da uporablja dinamično velikost koraka. Pri dovolj majhnem koraku, pa napaka pride tudi na velikostni red napake zaokroževanja pri uporabi float, pri določenih metodah.
+
+\insertfig{velikikorakinapak.pdf}{Graf napak, pri različnih redih velikosti koraka. Opazimo, da je \textit{Scipy} metoda neodvisna od koraka, torej najbrž uporablja dinamično velikost koraka. Opazimo tudi, da pri premajhnih velikostih koraka, napaka pri določenih metodah pride na red velikosti napake zaokroževanja.}{velikikorakinapak}
+
+Poglejmo si še, kaj pa se z metodami dogaja, če korak še močno povečamo. Ta primer je izrisan na grafu~\ref{fig:hugekorak}. Opazimo, da Eulerjeva metoda na neki točki prehiti nekaj ostalih metod. Medtem ko sama RK4 metoda, še na tej skali deluje zelo dobro.
+
+\insertfig{hugekorak.pdf}{Graf napak različnih metod, pri zelo velikih korakih. Zanimiva opazka je, da na neki točki Eulerjeva metoda niti ni več najslabša.}{hugekorak}
+
+\section{Zaključek}
+Tale zaključek ponovno pišem v noči iz srede na četrtek. Skupen čas, ki sem ga porabil za to nalogo je nekje 6 ur, od česar sta 2 iz predavanj prejšnji četrtek. Ta zaključek bo kratek, saj imam jutri kolokvij in potrebujem spanec, lahko noč!
+
+\end{document}
