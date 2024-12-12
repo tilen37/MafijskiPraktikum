@@ -1,0 +1,80 @@
+\documentclass{porocilo}
+\input{.local/mafijski_praktikum}
+\projecttitle{7. Newtonov Zakon}
+\instructions{Čim več metod uporabi za izračun nihanja matematičnega nihala z začetnim pogojem  $\theta(0)= \theta_0 = 1$,\;$\dot{\theta}(0)=0$. Poišči korak, ki zadošča za natančnost na 3 mesta. Primerjaj tudi periodično stabilnost shem: pusti, naj teče račun čez 10 ali 20 nihajev in poglej, kako se amplitude nihajev sistematično kvarijo. Pomagaš si lahko tudi tako, da občasno izračunaš energijo $E \propto  1-\cos \theta + \tfrac{\dot{\theta}^2 }{2 \omega_0^2} $. Nariši tudi ustrezne fazne portrete!}
+
+\newcommand{\ddd}{\mathrm{d}}
+\newcommand{\Dd}[3][{}]{\frac{\ddd^{#1} #2}{\ddd#3^{#1}}}
+
+\begin{document}
+\maketitle
+
+\section{Uvod}
+Pri prejšnji vaji, sem delal s tako imenovanimi Eulerjevimi problemi ali \textit{Initial Value Problems (IVP)}, ki so navadne diferencialne enačbe prvega reda. Pri tej nalogi pa red enačbe dvignemo na drugega. To ima velik fizikalni pomen, saj je večina fizike zgrajena na enačbah drugega reda. Uporabljal bom numerične metode, ki sem jih že prejšnji teden ter nekaj novih.
+
+\subsection{Matematično nihalo}
+Obravnava matematičnega nihala je lahko precej zapletena, saj diferencialno enačbo
+\begin{equation}
+    \Dd[2]{y}{x} = C \sin(\omega x) \>,
+\end{equation}
+v sinusu ne razvijemo le do linearnega reda v $x$, kot fiziki to radi navadno naredimo. Analitično rešitev takega problema zapišemo z
+\begin{equation*}
+    \theta(t) = 2 \arcsin \left(\sin \left(\frac{\theta_0}{2}\right) \operatorname{sn} \left(K\left(\sin^2 \frac{\theta_0}{2}\right) - \omega t, \sin^2 \frac{\theta_0}{2}\right)\right) \>,
+\end{equation*}
+kjer je $K(m)$ popolni eliptični integral prve vrste, ki je v \textit{SciPy} knjižnici in v članku na spletni učilnici podan z:
+\begin{equation*}
+    K(m)=\int\limits_{0}^{1} \frac{d z}{\sqrt{\left(1-z^{2}\right)\left(1-m z^{2}\right)}} = \int\limits_{0}^{\frac{\pi}{2}} \frac{d u}{\sqrt{\left(1-m \sin^2{u}\right)}} \>.
+\end{equation*}
+
+\subsection{Simplektične metode}
+Simplektične metode so numerični integratorji, ki rešijo \textit{IVP}. Ob tem pa se držijo tudi nekih drugih omejitev, kot na primer ohranitev energije. Pri tej vaji bom uporabljal dve takšni metodi, in sicer \textit{Verlet} in \textit{PEFRL}.
+
+\section{Naloga}
+Pri tej nalogi je bilo navodilo raziskati delovanje različnih numeričnih metod za reševanje problema matematičnega nihala. Ker je rešitev tega problema analitično znana, sem lahko svoje rezultate primerjal z le to in tako dobil napake pri posameznih metodah.
+
+\subsection{Navadne metode}
+Najprej sem se lotil reševanja problema z metodami, ki sem jih uporabljal pri nalogi Enačbe Hoda. To so \textit{Eulerjeva}, \textit{Midpoint}, \textit{Runge-Kutta 4} in metoda, ki jo uporablja Pythonova knjižnica \textit{SciPy}. Pri teh metodah pričakujem, da bodo težave pri ohranitvi energije, saj je same po sebi ne upoštevajo.
+
+Ker sem želel pri vsaki izmed teh metod uporabiti enak korak, da zmanjšam število neodvisnih spremenljivk, in ker so boljše izmed njih dobre tudi po precej dolgih časih, relativno na moč mojega računalnika, sem uporabil korak $0,1$. Ta korak nikakor ni idealen, vendar sem v to bil nekako prisiljen.
+
+Za vsako izmed metod sem računal rešitev iterativno dokler napaka ni preveč narasla. Dobljene energije posameznih metod so prikazane na sliki~\ref{fig:energija}. Na sliki opazimo, da vsaka izmed uporabljenih metod po dovolj korakih, nekatere prej druge kasneje, divergira od analitične vrednosti energije, ki je konstantna. Iz tega razloga poskusimo problem rešiti še s pomočjo simplektičnih metod.
+
+\insertfig{energija.pdf}{Izračunane energije rešitev pri različnih metodah v odvisnosti od časa. Pri SciPy metodi opazimo nekakšen popravek energije, ki pa je žal zaradi računske omejitve nisem dalje preizkušal.}{energija}
+
+\subsection{Simplektične metode}
+Simplektične metode so razred numeričnih integratorjev, ki pri iteraciji ohranjajo energijo. Izkažejo se posebej uporabne za reševanje problemov, kjer zaradi fizikalnih razlogov vemo, da se bo energija ohranjala. V našem primeru je to res, saj nimamo disipativnih členov, torej je uporaba simplektičnih metod ustrezna.
+
+Uporabil bom dve metodi, in sicer \textit{Verlet} in \textit{PEFRL}. Metodi bi naj ohranjali energijo, vendar me je zanimalo, kako to izgleda praktično, zato sem pogledal odvisnost energije od časa za obe metodi (slika~\ref{fig:simpE}). Pričakovano, metodi ohranjata energijo, mehanizem za to pa je nekakšno nihanje okoli, oziroma bolj natančno pod pravo vrednostjo. Zanimivo je, da pri metodi Velet energija vseskozi ostane pod analitično, pri PEFRL pa za malo preide tudi nad pravo energijo in se nato vrne pod.
+
+\begin{multifig}{2}{Odvisnost energije od časa za simplektični metodi. Opazimo značilno nihanje, ki se veča zaradi logaritemske skale.}{0.49}{simpE}
+    \subfig{verlet.pdf}{Verlet}{verletE}
+    \subfig{pefrl.pdf}{PEFRL}{pefrlE}
+\end{multifig}
+
+\subsection{Časovne zahtevnosti}
+Sedaj sem obravnaval dva tipa numeričnih integratorjev in opazil, da so simplektične metode za dan problem boljše. Naslednje vprašanje je, kakšna je časovna zahtevnost teh metod in s tem, ali se jih splača uporabljati za takšne probleme. Časovne zahtevnosti posameznih metod so prikazane na sliki~\ref{fig:bigO}. Pri velikem številu korakov opazimo uporabnost simplektičnih metod, saj hitrejše metode prej odpovedo iz stališča napake. Posebno me je presenetila metoda PEFRL, ki je proti tisti v  knjižnici SciPy skoraj za red velikosti hitrejša, in zaradi svoje simplektične narave tudi boljša na merjeni velikostni skali števila korakov.
+
+\insertfig{bigO.pdf}{Graf časovnih zahtevnosti posameznih metod izračunan v nekaj točkah. Tukaj me je močno omejevala računska moč mojega računalnika. Za vsako izmed metod se črta začne polna in nato preide v črtkano, meja med tema območjema je postavljena tam, kjer je napaka metode postala prevelika, da bi še bila uporabna.}{bigO}
+
+\subsection{Fazni diagram}
+Za zaključek sem vse metode skupaj izrisal še na faznem diagramu na sliki~\ref{fig:fazni} in odsek le tega na sliki~\ref{fig:fazni_cut}. Znotraj natančnosti na tej sliki, simplektične metode z analitično rešitvijo sovpadajo. Za ostale metode vidimo, kako zasedajo večjo površino v faznem prostoru, kar bi se v obliki tira videlo kot vedno večje odstopanje od analitične rešitve.
+
+\insertfig{fazni_diagram.pdf}{Fazni diagram vseh uporabljenih metod. Zaradi zelo velike količine podatkov, sem podatke strnil, da sem jih uspel izrisati v zglednem času. Posledica tega procesa je, da fazni diagram ne označuje dejanske orbite v faznem prostoru, vendar bolj površino po kateri se posamezna metoda giba.}{fazni}
+
+\insertfig{fazni_diagram_cut.pdf}{Odsek faznega diagrama iz slike~\ref{fig:fazni}. Opazimo, da analitična in simplektične metode na tej velikostni skali sovpadajo.}{fazni_cut}
+
+\newpage
+\section{Zaključek}
+Pri tej nalogi sem se spoznal s simplektičnimi metodami reševanja diferencialnih enačb. Le te so zelo uporabne, saj se držijo znanih fizikalnih zakonov, v tem primeru ohranitev energije, neposredno po svoji definiciji, \textit{on shelf}.
+
+Pri tej vaji sem se nekoliko bolj potrudil, da bi moje besedilo bilo bolje berljivo. Ali mi je to uspelo, ali ne, lahko bralec sam preceni, vendar pa je to aspekt teh nalog, ki ga bom v prihodnje še pilil.
+
+Še seveda standardna časovna statistika, za nalogo sem porabil dobrih 12 ur, kjer pa sem tokrat daleč največ časa porabil pri čakanju na izris grafov, na katerih je bilo tudi po nekaj deset milijonov točk, kar je za moj računalnik že zelo naporno.
+\end{document}
+
+% Uvod: Nekaj o matematičnem nihalu, analitična rešitev z opisom funkcij
+% Naštete uporabljene metode
+
+% Napake metod z večanjem števila korakov, rešitev problema so simplektične metode
+% Časovna (in prostorska?) zahtevnost navadnih in simplektičnih metod
+% Cilj naloge je ugotoviti kaj zgubimo s tem, da uporabljamo simplektične metode, ki delujejo pri večjem številu korakov.
