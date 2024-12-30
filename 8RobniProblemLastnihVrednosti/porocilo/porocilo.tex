@@ -1,0 +1,163 @@
+\documentclass{porocilo}
+\usepackage{tikz}
+
+\input{.local/mafijski_praktikum}
+\projecttitle{Robni problem lastnih vrednosti}
+\instructions{Določi nekaj najnižjih lastnih funkcij in lastnih
+    vrednosti za neskončno in končno potencialno jamo z diferenčno metodo in metodo streljanja, lahko pa poskusiš še iterativno in  s kakšno drugo metodo. Problem končne jame je s strelsko metodo le trivialna posplošitev problema neskončne jame: spremeni se le robni pogoj pri $x=a/2$, ki ima zaradi zahteve po zveznosti in zvezni odvedljivosti valovne funkcije zdaj obliko $c_1\psi(a/2) + c_2\psi'(a/2) = 0$. Alternativno, lahko pri končni jami problem obrnemo in začnemo daleč stran, kjer je funkcija (in odvod le-te) skoraj nič, ter poskušamo zadeti  pogoj (soda,liha funkcija) v izhodišču. Preveri, kaj je bolje (bolj stabilno, natančno)! Kaj ima pri diferenčni metodi večjo vlogo pri napaki: končna natančnost diference, s katero aproksimiramo drugi odvod, ali zrnatost intervala (končna razsežnost matrike, ki jo diagonaliziramo)?}
+
+\begin{document}
+\maketitle
+
+\section{Uvod}
+Potencialna jama, problem, ki ga rešujemo pri tej nalogi, je v kvantni mehaniki eden izmed bolj pomembnih, še posebej ob prvem stiku s smerjo. Pri tej nalogi bomo obravnavali dva tipa, in sicer končno in neskončno potencialno jamo. Razlika je v vrednosti potenciala izven jame, ki je enkrat končen, drugič ne. Diagrama takšnih sistemov sta narisana na sliki~\ref{fig:potential_wells}. Enačba, kateri se delci v takšnih sistemih podrejajo, je vsem znana \textit{stacionarna Schr{\"o}dingerjeva enačba}
+\begin{equation*}
+    - \frac{\hbar^2}{2m} \Pd[2]{\Psi}{x} + V(x) \Psi = E \Psi \>.
+\end{equation*}
+Za namene te naloge lahko enačbo zapišemo kot
+\begin{equation*}
+    \Psi'' = \left( V(x) - E \right) \Psi
+\end{equation*}
+in jo krstimo za brezdimenzijsko. Kar pomeni, da so v tej obliki vse količine, ki nastopajo, brezdimenzijske, kar dosežemo s pogojem $\tfrac{\hbar^2}{2m} = 1$. Potencial $V(x)$ se razlikuje med obema primeroma izven jame, in sicer velja:
+\begin{equation}
+    \label{eq:potential}
+    \textbf{končna:} \enspace
+    V_{\text{kon}}(x) =
+    \begin{cases}
+        0;   & -1 < x < 1,   \\
+        V_0; & \text{sicer},
+    \end{cases}
+    \qquad
+    \textbf{neskončna:} \enspace
+    V_{\text{nes}}(x) =
+    \begin{cases}
+        0;      & -1 < x < 1,   \\
+        \infty; & \text{sicer}.
+    \end{cases} \quad
+\end{equation}
+Kjer sem za širino jame vzel $2$ in koordinatni sistem postavil na sredino.
+
+\insertdiag{diag}{Diagram potencialnih jam z energijskimi nivoji in lastnimi funkcijami.}{potential_wells}
+
+\newpage
+Analitične rešitve potencialnih jam so dobro znane, in sicer so to sinusi in kosinusi, ki jih v končnem primeru spremljata še eksponentna repa izven območja jame (slika~\ref{fig:potential_wells}). Posebnost takšnih rešitev je, da se ločujejo na sode in lihe, kar nam bo pri reševanju prišlo prav. V neskončnem primeru imajo energije značilno kvadratno odvisnost od zaporedne številke rešitve
+\begin{equation*}
+    E_{\rm n} \propto \pi^2 n^2 \>.
+\end{equation*}
+
+\subsection{Strelska metoda}
+Pri tej metodi robni problem lastnih vrednosti prevedemo na problem začetne vrednosti. To storimo tako, da neko splošno diferencialno enačbo s homogenima Dirichletovima robnima pogojema
+\begin{align*}
+     & y'' = f(x, y, y', \lambda) \\
+     & y(a) = 0,\enspace y(b) = 0
+\end{align*}
+na intervalu $[a, b]$ obravnavamo kot sistem enačb
+\begin{align*}
+     & y_1' = y_2\>,                      \\
+     & y_2' = f(x, y_1, y_2, \lambda)\>,  \\
+     & y_1(a) = 0,\enspace y_2(a) = 1 \>.
+\end{align*}
+Iz takšnega sistema znamo, če seveda poznamo funkcijo $f$ numerično izračunati funkciji $y_1$ in $y_2$, na primer z metodo \textit{Runge-Kutta 4}. S takšnim pripravkom sedaj poskušamo zadeti tudi drugi robni pogoj $y_1(b) = 0$. Vsakič, ko nam ob izboru $\lambda$ to uspe storiti, smo našli eno izmed potencialno mnogih rešitev problema. Delujoče $\lambda$ najdemo s pomočjo na primer Newtonove metode ali bisekcije. Za bolj zahtevne robne pogoje se metoda seveda nekoliko modificira, vendar se vedno ohrani korak pretvorbe problema na problem začetnih vrednosti in nato reševanje sistema le teh.
+
+\subsection{Metoda končnih diferenc}
+Pri tej metodi je ključen korak, da odvode v enačbah sistema nadomestimo s končnimi diferencami. Torej velja
+\begin{equation*}
+    \frac{Y_{\rm j+1} - 2 Y_{\rm j} + Y_{\rm j-1}}{h^2} = f(x_{\rm j}, Y_{\rm j}, \frac{Y_{\rm j+1} + Y_{\rm j-1}}{2h}) \>,
+\end{equation*}
+kjer smo prvi in drugi odvod nadomestili s končnimi diferencami in ustrezno delili z dolžino koraka med mrežnimi točkami $h$. Prednost takega zapisa je v tem, da lahko vse točke obravnavamo naenkrat. Stacionarno Schr{\"o}dingerjevo enačbo tokrat zapišimo operatorsko
+\begin{equation*}
+    \mathbf{H} \Psi = E\Psi\>,
+\end{equation*}
+kjer je $\mathbf{H}$ Hamiltonov operator in $E$ njegova lastna vrednost. Vemo, da velja
+\begin{equation*}
+    \mathbf{H} = -\frac{\hbar^2}{2m} \Pd[2]{}{x} + V(x)\>,
+\end{equation*}
+kar zapisano v matriki pri končnih diferencah in brezdimenzijsko postane
+\begin{equation*}
+    \text{H} = -\frac{1}{2 h^2} \begin{bmatrix}
+        -2     & 1      & 0      & 0      & \cdots & 0      \\
+        1      & -2     & 1      & 0      & \cdots & 0      \\
+        0      & 1      & -2     & 1      & \cdots & 0      \\
+        \vdots & \vdots & \vdots & \ddots & \ddots & \vdots \\
+        0      & 0      & 0      & \cdots & 1      & -2     \\
+    \end{bmatrix} + V(x) \mathbb{I}\>.
+\end{equation*}
+$\mathbf{H}$ je v tem zapisu tridiagonalna matrika H velikosti $N \times N$, $\mathbb{I}$ pa enotska matrika iste velikosti. Rešitve našega sistema so torej lastne vrednosti in lastni vektorji dobljene matrike. V tej bazi zapisani lastni vektorji so kar valovne funkcije. Te izračunamo numerično, saj za tridiagonalne matrike obstajajo že implementirani učinkoviti algoritmi.
+
+\section{Naloga}
+Prvih nekaj rešitev sistema, ki se z analitičnimi precej dobro ujemajo, so izrisane na slikah~\ref{fig:inf} in~\ref{fig:koncna}. Dobljene lastne vrednosti so izpisane v tabeli~\ref{tab:eigen}. Za končno jamo sem pri diferenčni metodi dodal le večje območje in na le tem potencial $V_0 = 100$. Za strelsko metodo pa sem začel strel daleč stran in upošteval, da sta vrednost in odvod tam zelo majhna, nato pa sem ciljal robni pogoj lihosti oziroma sodosti na sredini jame.
+
+\begin{table}
+    \centering
+    \caption{\label{tab:eigen} Tabela lastnih vrednosti neskončne potencialne jame dobljenih na različne načine. Rezultatom s knjižnico \textit{QuSpin} prvo vrednosti nastavimo po analitični oziroma diferenčni metodi.}
+    \begin{tabular}{c c c c c}
+                    & Analitična & Strelska & Diferenčna & \textit{QuSpin} \\
+        \toprule
+        \multicolumn{5}{c}{\textbf{Neskončna jama}}                        \\
+        $E_{\rm 1}$ & 2,47       & 2,47     & 2,46       & 2,47            \\
+        $E_{\rm 2}$ & 9,87       & 9,87     & 9,85       & 9,87            \\
+        $E_{\rm 3}$ & 22,21      & 22,21    & 22,16      & 22,21           \\
+        $E_{\rm 4}$ & 39,48      & 39,48    & 39,40      & 39,48           \\
+        $E_{\rm 5}$ & 61,69      & 61,69    & 61,56      & 61,68           \\
+        \multicolumn{5}{c}{\textbf{Končna jama}}                           \\
+        $E_{\rm 1}$ &            & 2,04     & 2,15       & 2,15            \\
+        $E_{\rm 2}$ &            & 8,14     & 8,60       & 8,61            \\
+        $E_{\rm 3}$ &            & 18,24    & 19,33      & 19,36           \\
+        $E_{\rm 4}$ &            & 32,25    & 34,29      & 34,35           \\
+        $E_{\rm 5}$ &            & 49,97    & 53,44      & 53,54           \\
+    \end{tabular}
+\end{table}
+
+\insertfig[0.7]{fd_infwell}{Izrisane rešitve neskončne potencialne jame zamaknjenje za lastne vrednosti. Izrisane rešitve so bile izračunane z metodo končnih diferenc.}{inf}
+\insertfig[0.7]{fd_fwell}{Izrisane rešitve končne potencialne jame zamaknjene za lastne vrednosti. Izrisana rešitev so bile izračunana z metodo končnih diferenc.}{koncna}
+
+\subsection{Časovna zahtevnost in natančnost}
+Sedaj se osredotočimo na uporabnost metod glede na njuni napaki in časovni zahtevnosti. Pri obeh metodah lahko spreminjamo število mrežnih točk. Pri strelski se bo to poznalo z velikostjo koraka metode uporabljene za izračun problema začetnih vrednosti. Na drugi strani s tem spreminjamo velikost Hamiltonove matrike diferenčne metode. To analizo naredimo na primeru neskončne potencialne jame, saj v tem primeru poznamo rešitve analitično.
+
+Odvisnosti za strelsko metodo sta izrisani na sliki~\ref{fig:str_N}, za diferenčno pa na sliki~\ref{fig:fd_N}. Opazimo, da je diferenčna metoda nekoliko počasnejša in da ima precej večjo napako. Pomemben dodatek je, da v tem času za matriko izračunamo $N$ lastnih vrednosti, vendar za namene primerjave zavržemo preostale. Torej je diferenčna metoda potencialno boljša, če potrebujemo več lastnih vrednosti z manjšo natančnostjo.
+
+\begin{multifig}{2}{Grafa časovne zahtevnosti in odvisnosti napake od števila mrežnih točk pri strelski metodi.}{0.49}{str_N}
+    \subfig{strelska_time.pdf}{Časovna zahtevnost.}{str_time_sub}
+    \subfig{strelska_err.pdf}{Napaka.}{str_err_sub}
+\end{multifig}
+
+\begin{multifig}{2}{Grafa časovne zahtevnosti in odvisnosti napake od velikosti matrik pri diferenčni metodi.}{0.49}{fd_N}
+    \subfig{diferencna_time.pdf}{Časovna zahtevnost.}{fd_time_sub}
+    \subfig{diferencna_err.pdf}{Napaka.}{fd_err_sub}
+\end{multifig}
+
+Poglejmo si še odvisnost napake od števila mrežnih točk za obe metodi. Ta grafa odvisnosti sta izrisana na sliki~\ref{fig:third}. Tudi po tej primerjavi je strelska metoda precej boljša.
+
+\begin{multifig}{2}{Odvisnost napake prvih nekaj lastnih vrednosti od časa.}{0.49}{third}
+    \subfig{strelska_err_time.pdf}{Strelska.}{str_time_err_sub}
+    \subfig{diferencna_err_time.pdf}{Diferenčna.}{fd_time_err_sub}
+\end{multifig}
+
+\section{\textit{QuSpin}}
+\textit{QuSpin} je Python knjižnica, ki je namenjena obravnavi večdelčnih kvantnih sistemov. Vendar nas nič v njej ne ustavlja, da število delcev postavimo na 1. V knjižnici sistem zapišemo tako, da zapišemo Hamiltonov operator. Za naš primer lahko to storimo tako
+\begin{equation*}
+    \mathbf{H} = J \sum_{i = 1}^{N} (|{+}_{i}{-}_{i+1}\rangle\langle{+}_{i}{-}_{i+1}| + |{-}_{i}{+}_{i+1}\rangle\langle{-}_{i}{+}_{i+1}|) + \sum_{i = 1}^{N} V_0^{\rm i} \>,
+\end{equation*}
+kjer prvi člen predstavlja kinetično energijo, drugi pa potencialno na vsakem izmed $N$ mest obravnavanega sistema. $J = -\tfrac{1}{2 a^2}$ je predfaktor kinetične energije, ki prihaja iz operatorja kinetične energije. Za vrednost $V_0$ pa v primeru neskončne potencialne jame vzamemo vrednost, ki je veliko večja od $J$. Na primer $V_0 = J \times 10^5$, za končno pa $V_0 = 100$. Za bazo izberemo bazo enega delca brez spina.
+
+Za dobljen operator zapisan v izbrani bazi nato s pomočjo vgrajene funkcije poiščemo lastne energije in stanja. Dobljeni rezultati so izpisani v tabeli~\ref{tab:eigen}. Opazimo, da je kljub podobnostim diferenčni metodi ta bolj natančna. Pomemben dodatek je še, da so dobljene energije s to metodo odmaknjene za neko vrednost, zato prvo lastno vrednost fiksiram glede na eno izmed ostalih metod. Za uporabo pa je ta knjižnica mnogo počasnejša, saj vsakič preveri ali je Hamiltonka hermitska, simetrična in ali se selci ohranjajo. Za tako enostaven primer lahko torej zaključimo, da je ta uporaba te knjižnice, kot pričakovano, pretirana.
+
+\section{Zaključek}
+Skozi dobrih 15 ur dela za to nalogo sem preveč časa porabil za razumevanje konceptov, ki so se nakoncu izkazali za trivialne iz stališča praktične uporabe in je zato poročilo izven časovne obravnave zelo skopo. Kljub temu, sem se ob tej nalogi precej naučil. Prav tako sem končno uspel uporabiti knjižnico \textit{QuSpin}, ki sem jo želel že pri prejšnjih nalogah, vendar nisem uspel ali pa naloga temu ni bila primerna.
+
+\end{document}
+
+% Uvod: Nekaj kratkega o Potencialnih jamah
+% Nato obrazlaga metod
+
+% Reševanje problema s strelsko metodo
+% Reševanje z diferenčno metodo 
+
+% Časovni zahtevnosti: 
+% - velikost koraka za strelsko metodo
+% - velikost matrike za diferenčno metodo
+
+% Graf odvisnosti napake prvih 5 energij od velikosti (kar spreminjam pri big O)
+% Pomembna opomba: diferenčna metoda da prvih N rešitev, strelska le 5 v tem času
+
+% Reševanje s knjižnico quspin
