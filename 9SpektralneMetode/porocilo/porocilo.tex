@@ -1,0 +1,285 @@
+\documentclass{porocilo}
+\usepackage{tikz}
+\input{.local/mafijski_praktikum}
+
+\newcommand{\bi}[1]{\hbox{\boldmath{$#1$}}}
+
+\projecttitle{Spektralne metode za začetne probleme PDE}
+\instructions{\begin{itemize}
+        \item Reši difuzijsko enačbo v eni razsežnosti $x\in [0,a]$
+              z začetnima pogojema
+              \begin{equation*}
+                  T(x,0) = T_0 \, \mathrm{e}^{-{(x-a/2)}^2 / \sigma^2} \quad \text{ali} \quad T(x,0) = T_0 \, \sin (\pi x/a)
+              \end{equation*}
+              (izberi razumne vrednosti za $D$, $a$ in $\sigma$)
+              in
+              \begin{enumerate}
+                  \item periodičnim robnim pogojem $T(0,t) = T(a,t)$.
+                  \item homogenim Dirichletovim robnim pogojem $T(0,t) = T(a,t)=0$.
+              \end{enumerate}
+              po Fourierovi metodi.
+        \item Kolokacijsko metodo uporabi ob Gaussovem začetnem pogoju
+              in homogenih Dirichletovih robnih pogojih $T(0,t)=T(a,t)=0$ ter primerjaj obe metodi.
+    \end{itemize}
+}
+
+\begin{document}
+\maketitle
+
+\section{Uvod}
+Difuzijska enačba je ena izmed najpomembnejših parcialnih diferencialnih enačb v fiziki. Bolj znana primera le te sta Schr{\"o}dingerjeva in toplotna enačba. Za neko splošno funkcijo $u$ v eni dimenziji ima obliko
+\begin{equation*}
+    \Pd{u}{t} = D \Pd[2]{u}{x} + Q \>,
+\end{equation*}
+kjer je $D$ difuzijska konstanta in $Q$ količina, ki je sorazmerna z gostoto izvorov. Poleg same enačbe potrebujemo za reševanje še dva robna in en začetni pogoj, ki nam skupaj enolično določijo rešitev. Žal se takšnega problema pogosto ne da analitično rešiti, v takšnih primerih lahko za numerično reševanje uporabimo spektralne metode. Pri tej nalogi se bomo srečali z dvema, in sicer s Fourierovo metodo in z metodo končnih elementov.
+
+\subsection{Fourierova metoda}
+Oglejmo si primer reševanja brez izvorne toplotne enačbe
+\begin{equation}
+    \label{eq:pde}
+    \Pd{T}{t} = D \Pd[2]{T}{x} \>.
+\end{equation}
+Za rešitev vzamemo nastavek
+\begin{equation*}
+    T = \sum_{k=0}^{N-1} c_{\rm k}(t) e^{-2\pi i f_{\rm k} x} \>,
+\end{equation*}
+kjer je $f_{\rm k} = \frac{k}{a}$. Torej za iskane funkcije $c_{\rm k}(t)$ velja
+\begin{equation*}
+    \Dd{c_{\rm k}(t)}{t} = D\, (-4\pi f_{\rm k}^2) \, c_{\rm k}(t) \>.
+\end{equation*}
+To je navadna diferencialna enačba prvega reda, katere rešitev je
+\begin{equation*}
+    c_{\rm k}(t) = H_{\rm k} e^{-4\pi f_{\rm k}^2 D t} \>.
+\end{equation*}
+Sledi, da lahko začetni pogoj zapišemo kot
+\begin{equation*}
+    T(x, t=0) = f(x) = \sum_{k=0}^{N-1}H_{\rm k} e^{-2\pi i f_{\rm k} x} \>,
+\end{equation*}
+kar pa opazimo, da ima natanko obliko diskretne Fourierove transformacije (DFT), če dodamo še diskretno mrežo
+\begin{equation*}
+    T(x_{\rm n}, t=0) = f(x_{\rm n}) = \sum_{k=0}^{N-1}H_{\rm k} e^{-2\pi i f_{\rm k} x_{\rm n}} \>, \qquad x_{\rm n} = n \tfrac{a}{N} \>.
+\end{equation*}
+Vrednosti $H_{\rm k}$ lahko potemtakem dobimo kar z uporabo FFT algoritma na začetnem pogoju. S pomočjo inverzne Fourierove transformacije na $c_{\rm k}(t)$ nato dobimo rešitev $T$ ob poljubnem času $t$.
+
+\newpage
+Naravno vprašanje ob tej izpeljavi je, kako zadostimo robnim pogojem? Zaradi narave Fourierove transformacije, implicitno zadostimo periodičnim robnim pogojem. Dirichletove (Neumannove) pa upoštevamo z liho (sodo) razširitvijo začetnega pogoja.
+
+\subsection{Metoda končnih elementov}
+Za primer si tokrat oglejmo enačbo (\ref{eq:pde}). Ponovno uporabimo mrežo $x_{\rm n} = n \Delta x = n \tfrac{a}{N}$. Za nastavek tokrat vzemimo
+\begin{equation*}
+    T(x, t) = \sum_{k=1}^{M} c_{\rm k}(t) \, \mathrm{B}_{\rm k}(x) \>,
+\end{equation*}
+kjer je $\mathrm{B}_{\rm k}$ kubični B-zlepek, centriran okoli $x_{\rm k}$. B-zlepki imajo obliko
+\begin{equation*}
+    \mathrm{B}_{\rm k}(x) = \left\{
+    \begin{array}{ll}
+        0
+         & \quad\text{če~~} x \le x_{k-2} \, , \cr
+         & \cr
+        \displaystyle\frac{1}{\Delta x^3} {(x - x_{k-2})}^3
+         & \quad\text{če~~} x_{k-2} \le x \le x_{k-1} \, , \cr
+         & \cr
+        +\displaystyle\frac{1}{\Delta x^3} {(x - x_{k-2})}^3
+        -\displaystyle\frac{4}{\Delta x^3} {(x - x_{k-1})}^3
+         & \quad\text{če~~} x_{k-1} \le x \le x_{k} \, , \cr
+         & \cr
+        +\displaystyle\frac{1}{\Delta x^3} {(x_{k+2} - x)}^3
+        -\displaystyle\frac{4}{\Delta x^3} {(x_{k+1} - x)}^3
+         & \quad\text{če~~} x_{k} \le x \le x_{k+1} \, , \cr
+         & \cr
+        \displaystyle\frac{1}{\Delta x^3} {(x_{k+2} - x)}^3
+         & \quad\text{če~~} x_{k+1} \le x \le x_{k+2} \, , \cr
+         & \cr
+        0
+         & \quad\text{če~~} x_{k+2} \le x \, .
+    \end{array}\right.
+\end{equation*}
+Robnim pogojem pa zadostijo v superpoziciji in ne nujno vsak posebej. Poleg robnih pogojev imamo pri tej metodi še tako imenovani \textit{kolokacijski pogoj}. To je pogoj, da se zlepek z rešitvijo ujema v izbranih točkah. Tako dobimo
+\begin{equation*}
+    \sum_{k=-1}^{N+1} \dot{c}_k(t) B_k(x_j) =
+    D \sum_{k=-1}^{N+1} c_k(t) B_k''(x_j) \>, \qquad j = 0,1,\ldots,N \>.
+\end{equation*}
+Po lastnostih B-zlepkov, dobimo
+\begin{equation*}
+    \dot{c}_{\rm j-1}(t) + 4\dot{c}_{\rm j}(t) + \dot{c}_{\rm j+1}(t)
+    = {\frac{6D}{{\Delta x}^2}} \left(c_{\rm j-1}(t) - 2c_{\rm j}(t) + c_{\rm j+1}(t) \right) \>,
+\end{equation*}
+kar lahko zapišemo matrično kot
+\[
+    \mathbf{A} \Dd{\bi{c}}{t} = \mathbf{B} \bi{c} \>,
+\]
+kjer je
+\[
+    \mathbf{A} = \left(
+    \begin{array}{ccccccc}
+            4 & 1 \cr
+            1 & 4     & 1 \cr
+              & 1     & 4     & 1 \cr
+              &       &       & \vdots \cr
+              &       &       & 1          & 4 & 1 & \cr
+              &       &       &            & 1 & 4 & 1 \cr
+              &       &       &            &   & 1 & 4
+        \end{array}
+    \right) \>, \qquad
+    \mathbf{B} = {\frac{6 D}{\Delta{x^2}}} \left({
+        \begin{array}{rrrrrrr}
+            -2 & 1 \cr
+            1  & -2    & 1 \cr
+               & 1     & -2    & 1 \cr
+               &       &       & \vdots \cr
+               &       &       & 1          & -2 & 1  & \cr
+               &       &       &            & 1  & -2 & 1 \cr
+               &       &       &            &    & 1  & -2
+        \end{array}
+    }\right)
+\]
+in $\bi{c} = {(c_1(t), c_2(t), \ldots c_{N-1}(t))}^\mathrm{T}$.
+To nam sedaj podaja časovni razvoj rešitve, kar rešujemo recimo z implicitnim Eulerjem
+\[
+    \left( \mathbf{A} - \frac{\Delta t}{2}{ \mathbf{B}}\right)\bi{c}^{\>(n+1)} \>
+    = \left( \mathbf{A} + \frac{\Delta t}{2}{ \mathbf{B}}\right)\bi{c}^{\>(n)} \>,
+\]
+kjer je $\mathbf{A}\bi{c}^{\>(0)} = {(f(x_{\rm 1}), f(x_{\rm 2}), \dots , f(x_{\rm N-1}))}^T$.
+
+\section{Naloga}
+Za začetne pogoje vzamimo funkciji iz navodil, s konstantami $T_0 = 100$, $a = 1$, $\sigma = 0,1$ in $D = 10^{-3}$. Začetna pogoja sta izrisana na sliki~\ref{fig:ZP}.
+
+\begin{multifig}{2}{Začetna pogoja.}{0.49}{ZP}
+    \subfig{ZP.pdf}{Gaussovski.}{zp_exp_sub}
+    \subfig{ZP_sin.pdf}{Sinusni.}{zp_sin_sub}
+\end{multifig}
+
+\newpage
+\subsection{Fourierova metoda}
+Najprej se lotimo reševanja s Fourierovo metodo za periodične robne pogoje, saj le ti pridejo implicitno iz uporabe metode. Rešitve po različnem številu korakov so izrisane na sliki~\ref{fig:periodic}. Poročilu pa sta priloženi tudi animaciji rešitve skozi čas \texttt{periodicni\_exp.gif} in \texttt{periodicni\_sin.gif}.
+
+\begin{multifig}{2}{Rešitve pri uporabi periodičnih robnih pogojev.}{0.49}{periodic}
+    \subfig{diffusion.pdf}{Gaussovski začetni pogoj.}{periodic_exp_sub}
+    \subfig{diffusion_sin.pdf}{Sinusni začetni pogoj.}{periodic_sin_sub}
+\end{multifig}
+
+Za zadostitev Dirichletovega ali Neumannovega robnega pogoja, pa moramo začetne pogoje razširiti in zrcaliti. Poglejmo si primer, kjer imamo točki $x=0$ Dirichletov in v točki $x=a$ Neumannov robni pogoj. Razširitev začetnega pogoja je za oba primera izrisana na sliki~\ref{fig:zrcaljeni_zp}.
+
+\begin{multifig}{2}{Razširitev začetnih pogojev za Dirichletov in Neumannov robni pogoj.}{0.49}{zrcaljeni_zp}
+    \subfig{zrcaljeni_zp.pdf}{Gaussovski začetni pogoj.}{zrcaljeni_zp_exp_sub}
+    \subfig{zrcaljeni_zp_sin.pdf}{Sinusni začetni pogoj.}{zrcaljeni_zp_sin_sub}
+\end{multifig}
+
+Rešitev takšnih primerov po različnem številu korakov so izrisane na sliki~\ref{fig:zrcaljeno}. Seveda nas v rešitvi ponovno zanima le območje med $0$ in $a$. Poročilu sta tudi priloženi animaciji rešitve \texttt{zrcaljeni\_exp.gif} in \texttt{zrcaljeni\_sin.gif}.
+
+\begin{multifig}{2}{Rešitve pri uporabi Dirichletovega in Neumannovega robnega pogoja.}{0.49}{zrcaljeno}
+    \subfig{resitev_zrcaljena.pdf}{Gaussovski začetni pogoj.}{zrcaljeni_exp_sub}
+    \subfig{resitev_zrcaljena_sin.pdf}{Sinusni začetni pogoj.}{zrcaljeni_sin_sub}
+\end{multifig}
+
+\subsection{Metoda končnih elementov}
+Matriki $\mathbf{A}$ in $\mathbf{B}$ sta ($N-1$)-dimenzionalni. To je zato, ker imamo poleg notranjih kolokacijskih točk, še robni točki in robni pogoj B-zlepkov. Pri reševanju naloge, si za robni pogoj B-zlepkov izberemo \textit{Natural Spline}, ki pravi
+\begin{align*}
+    B_0''(0) = 0 \>, \\
+    B_{\rm N}''(a) = 0 \>.
+\end{align*}
+To nam da enačbi
+\begin{align*}
+    c_{\rm -1} - 2 c_0 + c_{\rm 1} = 0 \>, \\
+    c_{\rm N-1} - 2 c_{\rm N} + c_{\rm N+1} = 0 \>.
+\end{align*}
+Tej dodajmo še Dirichletova robna pogoja $T(0) = T(a) = 0$, ki proizvedeta
+\begin{align*}
+    c_{\rm -1} + 4 c_0 + c_{\rm 1} = 0 \>, \\
+    c_{\rm N-1} + 4 c_{\rm N} + c_{\rm N+1} = 0 \>.
+\end{align*}
+To nam da pogoje za robne točke
+\begin{align*}
+     & c_0(t)        = 0 \>, \qquad & c_{\rm -1}(t)   &= - c_{\rm 1}(t)  \>, \\
+     & c_{\rm N}(t)  = 0 \>, \qquad & c_{\rm N-1}(t)  &= - c_{\rm N+1}(t) \>.
+\end{align*}
+Koeficientom v $\bi{c}$ dodamo te pogoje in dobimo rešitve na sliki~\ref{fig:fem}.
+
+\begin{multifig}{2}{Rešitve z metodo končnih elementov.}{0.49}{fem}
+    \subfig{fem.pdf}{Gaussovski začetni pogoj.}{fem_exp_sub}
+    \subfig{fem_sin.pdf}{Sinusni začetni pogoj.}{fem_sin_sub}
+\end{multifig}
+
+\newpage
+Poglejmo si še Neumannove robne pogoje $T'(0) = T'(a) = 0$, ki nam skupaj z robnima pogojema za B-zlepke data pogoja
+\begin{align*}
+    c_{\rm -1}(t)  & = c_0(t)        = c_{\rm 1}(t) \>,   \\
+    c_{\rm N-1}(t) & = c_{\rm N}(t)  = c_{\rm N+1}(t) \>.
+\end{align*}
+Vendar po uporabi teh pogojev opazimo, da se rešitev sistema ne spremeni in še vedno, izven manjše razlike v robnih točkah obnaša enako kot Dirichletova rešitev na sliki~\ref{fig:fem}. Razlog za to je oblika matrik $\mathbf{B}$ in  $\mathbf{A}$. In sicer se za Neumannov robni pogoj, spremenita tudi dva notranja kolokacijska pogoja. Poglejmo si, kako
+\begin{equation*}
+    \dot{c}_{\rm N-2}(t) + 4\dot{c}_{\rm N-1}(t) + \dot{c}_{N}(t)
+    = {\frac{6D}{{\Delta x}^2}} \left(c_{N-2}(t) - 2c_{\rm N-1}(t) + c_{\rm N}(t) \right) \>,
+\end{equation*}
+če upoštevamo še dejstvo, da sta $c_{\rm N} = c_{\rm N-1}$, dobimo
+\begin{equation*}
+    \dot{c}_{\rm N-2}(t) + 5 \dot{c}_{\rm N-1}(t)
+    = {\frac{6D}{{\Delta x}^2}} \left(c_{N-2}(t) - c_{\rm N-1}(t)\right) \>,
+\end{equation*}
+kar matriki spremeni v
+\[
+    \mathbf{A} = \left(
+    \begin{array}{ccccccc}
+            4 & 1 \cr
+            1 & 4     & 1 \cr
+              & 1     & 4     & 1 \cr
+              &       &       & \vdots \cr
+              &       &       & 1          & 4 & 1 & \cr
+              &       &       &            & 1 & 4 & 1 \cr
+              &       &       &            &   & 1 & 5
+        \end{array}
+    \right) \>, \qquad
+    \mathbf{B} = {\frac{6 D}{\Delta{x^2}}} \left({
+        \begin{array}{rrrrrrr}
+            -2 & 1 \cr
+            1  & -2    & 1 \cr
+               & 1     & -2    & 1 \cr
+               &       &       & \vdots \cr
+               &       &       & 1          & -2 & 1  & \cr
+               &       &       &            & 1  & -2 & 1 \cr
+               &       &       &            &    & 1  & -1
+        \end{array}
+    }\right) \>.
+\]
+
+\newpage
+Če sedaj poskusimo rešiti problem s tako modificiranima matrikama, dobimo grafa, izrisana na sliki~\ref{fig:fem_neu}. Že od daleč opazimo, da v primeru sinusnega začetnega pogoja, v robovih rešitev ni najboljša. Rešitvi sta tudi animirani kot prilogi tega poročila, v datotekah \texttt{fem\_neu.gif} in \texttt{fem\_sin\_neu.gif}. Pri animacijah vidimo še več numeričnih napak v obliki nihanja rešitev na robu.
+
+\begin{multifig}{2}{Rešitve Dirichletovega in Neumannovega robnega pogoja z metodo končnih elementov.}{0.49}{fem_neu}
+    \subfig{fem_neu.pdf}{Gaussovski začetni pogoj.}{fem_neu_sub}
+    \subfig{fem_sin_dir_neu.pdf}{Sinusni začetni pogoj.}{fem_sin_neum_sub}
+\end{multifig}
+
+Kaj pa uporaba razširitve začetnega pogoja in metoda končnih elementov, ali lahko tudi ta dva postopka souporabimo? Odgovor je ja, vendar zgleda metoda precej manj stabilna, saj imata rešitve še veliko več nihanj, ki jih ne pričakujemo (slika~\ref{fig:fem_neu_zrc}). Rezultata sta animirana v prilogi, v datotekah \texttt{fem\_sin\_neu\_zrc.gif} in \texttt{fem\_neu\_zrc.gif}.
+
+\begin{multifig}{2}{Rešitve Dirichletovega in Neumannovega robnega pogoja z metodo končnih elementov in zrcaljenjem za zadostitev robnih pogojev.}{0.49}{fem_neu_zrc}
+    \subfig{fem_neu_zrc.pdf}{Sinusni začetni pogoj.}{fem_neu_zrc_sub}
+    \subfig{fem_sin_neu_zrc.pdf}{Gaussovski začetni pogoj.}{fem_sin_neu_zrc_sub}
+\end{multifig}
+
+\newpage
+\section{Zaključek}
+Čeprav imam pri tej nalogi še kar nekaj idej, česar bi se še lahko lotil, kot na primer pogledal natančnost in stabilnost metod v odvisnosti od števila točk. Žal za izpeljavo le teh nimam več časa. Naloga je bila zelo zanimiva, Fourierova metoda presenetljivo lahka in učinkovita, metoda končnih elementov pa zelo bogata.
+
+Po dobrih 9,5 urah dela za to poročilo ga oddajam le nekaj dni po novem letu, zato tudi srečno 2025!
+
+% Izpeljava Neumannovega RP pogoja (-1} = c_0 = c_{1})
+% Poskusi z Neumannovimi RP
+% Prikaz numeričnih nihanj, ki nastanejo pri zrcaljenju
+
+% Zaključek
+
+\end{document}
+
+% Kratek uvod v difuzijsko enačbo
+% Izpeljava iz zapisa po lastnih funkcijah do DFT
+% Kratek opis FEM metode
+
+% Reševanje
+% Rešitve različnih RP s FFT, opis postopka, po 20 korakih, animacije
+% Rešitve še s sin ZP
+
+% Rešitve s FEM metodo
+% Problemi v robnih točkah, poskusi razrešitve le teh
+
+% Zaključek
