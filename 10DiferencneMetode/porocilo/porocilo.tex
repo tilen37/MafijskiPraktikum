@@ -1,0 +1,123 @@
+\documentclass{porocilo}
+\usepackage{tikz}
+
+\newcommand{\ii}{\mathrm{i}}
+\input{.local/mafijski_praktikum}
+\projecttitle{
+    Diferenčne metode za začetne probleme PDE}
+\instructions{
+    \begin{itemize}
+        \item Spremljaj časovni razvoj začetnega stanja
+              \[
+                  \Psi(x,0)=\sqrt{\frac{\alpha}{\sqrt{\pi}}} e^{-\alpha^2 {(x-\lambda)}^2/2}
+              \]
+              v harmonskem potencialu $V(x)=\frac12 kx^2$, kjer je v naravnih enotah $\alpha=k^{1/4}$, $\omega=\sqrt{k}$.
+              Postavi parametre na $\omega=0.2$, $\lambda=10$. Krajevno mrežo vpni v interval $[a,b]=[-40,40]$ z $N=300$ točkami. Nihajni čas je $T=2\pi/\omega$, primerno prilagodi časovni korak $\Delta t$ in opazuj deset period.
+
+        \item Opazuj še razvoj gaussovskega valovnega paketa
+              \[
+                  \psi(x,0)={(2\pi {\sigma_0}^2)}^{-1/4} e^{\ii k_0(x-\lambda)}e^{-{(x-\lambda)}^2/{(2\sigma_0)}^2}
+              \]
+              v prostoru brez potenciala.
+              Postavi $\sigma_0=1/20$, $k_0=50\pi$, $\lambda=0.25$ in območje $[a,b]=[-0.5,1.5]$ ter $\Delta t=2\Delta x^2$. Časovni razvoj spremljaj, dokler težišče paketa ne pride do $x\approx 0.75$.
+    \end{itemize}
+}
+
+\begin{document}
+\maketitle
+\section{Uvod}
+Enorazsežna nestacionarna Schr{\" o}dingerjeva enačba
+\begin{equation*}
+    \left( i \hbar \Pd{}{t} - \mathbf{H} \right) \Psi = 0 \>,
+\end{equation*}
+opisuje razvoj valovne funkcije v kvantni mehaniki. V njej nastopa Hamiltonov operator, ki vsebuje tudi potencialni člen in ga v brezdimenzijski obliki v eni dimenziji zapišemo
+\begin{equation*}
+    \mathbf{H} = -\frac{1}{2} \Pd[2]{}{x} + V(x) \>.
+\end{equation*}
+Operator $\mathbf{H}$, je generator časovnega premika, zato le tega dosežemo tako, da ga eksponiramo. V približku z nekaj izkoriščanja notacije lahko to zapišemo kar kot
+\begin{equation*}
+    \Psi(x, t+ \Delta t) = e^{- i \mathbf{H} \Delta t} \Psi(x, t) = \frac{1 - \tfrac{1}{2}i\mathbf{H} \Delta t}{1 + \tfrac{1}{2} i\mathbf{H} \Delta t} \Psi(x, t) \>.
+\end{equation*}
+Kot je najbrž jasno že iz naslova naloge, nato območje na katerem delamo diskretiziramo in odvode zapišemo z diferencami. Mrežna razmaka sta $\Delta t$ in $\Delta x$. Vrednosti valovne funkcije in potenciala v mrežnih točkah ob času $t_n$ označimo $\psi(x_j,t_n)=\psi_j^n$ oziroma $V(x_j)=V_j$. Krajevni odvod izrazimo z diferenco
+\begin{equation*}
+    \Psi''(x)\approx \frac{\psi(x+\Delta x,t)-2\psi(x,t)+\psi(x-\Delta x,t)}{\Delta x^2}=\frac{\psi_{j+1}^n - 2\psi_j^n+\psi_{j-1}^n}{\Delta x^2}\>.
+\end{equation*}
+Upoštevamo Dirichletove robne pogoje, torej $\psi_0^n = \psi_N^n = 0$. Vse notranje točke zložimo v vektor
+\begin{equation*}
+    \boldsymbol{\Psi}^n = {(\psi_1^n,\ldots,\psi_{N-1}^n)}^T
+\end{equation*}
+in z njim zapišemo implicitno enačbo
+\begin{equation}
+    (1 - \vartheta r \text{A}) \boldsymbol{\Psi}^{n+1} = (1 + (1-\vartheta) r \text{A}) \boldsymbol{\Psi}^n \>,
+\end{equation}
+kjer je $r = i \frac{\Delta t}{2 \Delta x^2}$ in $\text{A}$ matrika drugega odvoda
+\begin{equation*}
+    \text{A} = \begin{bmatrix}
+        -2     & 1      & 0      & 0      & \cdots & 0      \\
+        1      & -2     & 1      & 0      & \cdots & 0      \\
+        0      & 1      & -2     & 1      & \cdots & 0      \\
+        \vdots & \vdots & \vdots & \ddots & \ddots & \vdots \\
+        0      & 0      & 0      & \cdots & 1      & -2     \\
+    \end{bmatrix} \>.
+\end{equation*}
+Za seštevanje vektorjev in matrik smiselno množimo z identično matriko. Za osnovno rešitev vzamemo $\vartheta = 0,5$.
+
+\subsection{Analitični rešitvi problemov}
+Najprej se lotimo reševanja koherentnega stanja v harmoničnem potencialu. Vzamemo potencial in parametre iz navodil in iz kvantne mehanike vemo, da je analitična rešitev
+\begin{equation*}
+    \psi(x,t)=\sqrt{\frac{\alpha}{\sqrt{\pi}}} \exp\left[-\frac12 {\left(\xi-\xi_\lambda \cos\omega t\right)}^2 - \ii \left(\frac{\omega t}{2}+\xi\xi_\lambda \sin\omega t - \frac14 \xi_\lambda^2 \sin 2 \omega t\right)\right]\>,
+\end{equation*}
+kjer je $\xi=\alpha x$, $\xi_\lambda=\alpha \lambda$.
+
+Nato si poglejmo še obnašanje prostega gaussovskega valovnega paketa. Iz kvantne mehanike za tak sistem poznamo analitično rešitev, ki je
+\begin{equation*}
+    \psi(x,t)=\frac{{(2\pi \sigma_0^2)}^{-1/4}}{\sqrt{1+\ii t/(2\sigma_0^2)}} \exp\left[
+    \frac{-{(x-\lambda)}^2/{(2\sigma_0)}^2+\ii k_0(x-\lambda)-\ii k_0^2 t/2}{1+\ii t/(2\sigma_0^2)}
+    \right] \>.
+\end{equation*}
+
+\insertfig[0.8]{evo.png}{Polje verjetnostne gostote odvisne od časa in kraja dobljene rešitve za harmonski potencial.}{evo}
+
+\newpage
+\section{Naloga}
+\subsection{Harmonski potencial}
+Najprej si oglejmo, kako rešitev v harmonskem potencialu sploh zgleda. To lahko storimo tako, da izračunamo verjetnostno gostoto $\rho = |\psi|^2$ za vsak trenutek na naši mreži, slika~\ref{fig:evo}. Ker poznamo tudi analitično rešitev pa se lahko tudi vprašamo, kako dobra je zares naša meritev v odvisnosti od časa. To lahko izračunamo preko RMSE metrike, to je prikazano na sliki~\ref{fig:rmse}. Na sliki opazimo naraščanje napake, kar je pričakovano. Opazimo pa tudi periodično obnašanje napake in se lahko iz vzorca vprašamo, ali je napaka največja v ravnovesni legi ali v skrajnih legah. To pa lahko preverimo tako, da kot smo sedaj naredili presek ob določenem času, sedaj naredimo presek ob izbrani poziciji $x$ in ob le tej pogledamo RMSE.~To je prikazano na sliki~\ref{fig:rmse_space}. Iz tega grafa vidimo, da je napaka v ravnovesni legi manjša, kot vskrajnih legah. Poleg tega pa je napaka dlje stran od središča precej manjša, saj je potencial tam zelo velik in je zato verjetnostna gostota majhna.
+
+\insertfig[0.8]{rmse.pdf}{RMSE dobljene rešitve v primerjavi z analitično ob posameznem času.}{rmse}
+
+\insertfig[0.8]{rmse_space.pdf}{RMSE dobljene rešitve v primerjavi z analizično ob posamezni poziciji.}{rmse_space}
+
+\subsection{Prosti valovni paket}
+Lotimo se še reševanja prostega gaussovskega valovnega paketa. Podobno za ta primer najprej izrišimo izgled rešitve, na sliki~\ref{fig:evo_free}. Najbolj očiten opazek na sliki so numerične anomalije, ki nastanejo ob trku vala z robom območja, kjer držimo Dirichletov robni pogoj. Zelo lepo se tudi vidi odbojni zakon. 
+
+Če se sedaj osredotočimo na del slike do $x = 0,75$, vidimo, da sta pričakovana vrednost pozicije čas sorazmerna. Vidimo tudi difuzijo paketa. Ponovno se lahko vprašamo, kako dobra je ta rešitev v primerjavi z analitično in ponovno si lahko ogledamo RMSE teh dveh rešitev v ortogonalnih presekih, vendar sta obe enaki, do konstante natančno, zaradi sorazmernosti pričakovane vrednosti pozicije s časom. Tako lahko ostanemo le pri enem izmed teh brez izgube informacije o sistemu. To je izrisano na sliki~\ref{fig:rmse_free}.
+
+\insertfig[0.8]{evo_free.png}{Polje verjetnostne gostote odvisne od časa in kraja dobljene rešitve za prosti valovni paket.}{evo_free}
+
+\insertfig[0.8]{rmse_free.pdf}{RMSE v odvisnosti od pričakovane vrednosti pozicije valovnega paketa. Napaka močno naraste ob trku valovnega paketa z robom definiranega območja, kjer držimo Dirichletove robne pogoje.}{rmse_free}
+
+\section{Izboljšave}
+Poglejmo si še, kaj se z metodo dogaja, če spreminjamo vrednosti $\vartheta$. Ker je osnovna vrednost $0,5$, je smiselno, da pogledamo dogajanje okoli te vrednosti. To lahko storimo na primer za harmonični potencial. Rezultati so na sliki~\ref{fig:theta1}. Opazimo, da obe vrednosti pod $0,5$ divergirata, obe nad pa se obnašata precej podobno.To ni ravno rezultat, ki bi ga pričakovali, saj se metoda tako ne obnaša nič bolje kot osnovna. Območje, ki smo ga preiskali tako, nam torej ni dalo nobenih resnih izboljšav, zato se lahko vprašamo, kaj pa še parametru dodamo imaginarni del. Tokrat opazimo izboljšavo. Za različne vrednosti parametra, se napake očitno razcepijo. Zanima nas le še optimalna vrednost imaginarne komponente parametra. Za optimalno vrednosti pričakujemo $\vartheta = 0,5 - \ii 0,5$, saj se to sklada z Douglasovo metodo. Na sliki~\ref{fig:theta3} vidimo iz nekaj primerov, kjer se naš poizkus s tem sklada.
+
+\insertfig[0.8]{theta1.png}{Odvisnost RMSE skozi čas za različne vrednosti parametra $\vartheta$.}{theta1}
+
+\insertfig[0.8]{theta2.png}{dvisnost RMSE skozi čas za različne kompleksne vrednosti parametra $\vartheta$.}{theta2}
+
+\insertfig[0.8]{theta3.png}{dvisnost RMSE skozi čas za različne kompleksne vrednosti parametra $\vartheta$.}{theta3}
+
+\section{Zaključek}
+Ura je 3:30 v četrtek pred rokom oddaje te naloge in pišem zaključek, medtem ko čakam, da moj računalnik izpljune še nekaj grafov za v poročilo. Za to poročilo bom skupno porabil nekje $\SI{9}{\hour}$. Samo reševanje te naloge je bilo zelo `sinusno', saj sem ne veliko ur nazaj panično spraševal sošolce, ali je kdorkoli dobil rezultate, ki so vsaj približno smiselni že z osnovno metodo, nekaj kar moja koda takrat še ni bila sposobna producirati. Kmalu po tem sem z \textit{Rubber duck debugging method} uspel probleme rešiti, le da so obrazlage racam v mojem primeru nadomestila sporočila sošolcem. Po besedah profesorja bi opisal metode uporabljene v tej nalogi za razliko od na primer tistih pri prejšnji kot takšne, kjer se hrošči v kodi neradi medseboj pokrajšajo brez zunanje intervencije.
+
+\end{document}
+
+% Kratek uvod, zapis uporabljene metode, izboljšave
+% Analitični rešitve
+
+% Izris rešitve
+% Izris napake
+% Pregled metode z izboljšave
+
+% Max napaka v odvisnosti od št odbojev za prvi primer (več kot 10 odbojev)
+% Napaka v odvisnosti od prepotovane razdalje za drugi primer
+
+% Zaključek
