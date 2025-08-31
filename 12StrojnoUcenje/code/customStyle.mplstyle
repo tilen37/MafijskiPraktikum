@@ -1,0 +1,9 @@
+text.usetex: True
+lines.linewidth: 2
+figure.figsize: 5.225, 3.919
+axes.grid: True
+grid.alpha: 0.5
+grid.linestyle: dashed
+text.latex.preamble: \input{customStyle_plt.tex}
+axes.prop_cycle: cycler(color=['B32D2D', '2F6E6A', 'D4A94D', '3F89B4', 'A67F5D', '598959', 'E96C4C', '358585', 'B2785C'])
+axes.formatter.use_locale: True
